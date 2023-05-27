@@ -1,0 +1,88 @@
+<style>
+    #sidebar {
+        background-color: slategray;
+        top: 0;
+        height: 200%;
+        width: 2em;
+        position: fixed;
+        left: 0;
+        overflow: hidden;
+        transition: 0.2s;
+        flex-flow: column wrap;
+        display:flex;
+        
+    }
+    #sidebar div {
+        display: block;
+        transition: 0.2s;
+        cursor:pointer;
+    }
+    #sidebar #btn {
+        position:relative;
+        margin-left:auto;
+        left:0;
+        right:0;
+        bottom:0;
+        top: 0;
+        font-size: 25px;
+        padding-right:.4em;
+    }
+    #mainBody {
+        transition:0.2s;
+        margin-left: 2em;
+        overflow-x: hidden;
+    }
+    #sidebar .choice {
+        margin-left: -5em;
+        margin-top:0.1em;
+        margin-bottom: 0.1em;
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
+        font-size: 25px;
+        color: slategray;
+        background-color: slategray;
+    }
+
+</style>
+
+<div id="sidebar">
+    <div id="btn" onclick="navUpdt()">
+        &equiv;
+    </div>
+        <div class="choice">Home</div>
+        <div class="choice">Users</div>
+        <div class="choice">About</div>
+        <div class="choice">Help</div>
+</div>
+
+<script>
+    let open = false;
+
+    function navUpdt() {
+        const mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
+        let width = mobile ? "100%" : "20em";
+        const choices = document.querySelectorAll(".choice");
+
+        if (open) {
+            document.getElementById("sidebar").style.width = "2em";
+            document.getElementById("mainBody").style.marginLeft = "2em";
+            document.getElementById("sidebar").style.backgroundColor = "slategray";
+            document.getElementById("btn").innerHTML = "&equiv;";
+            choices.forEach((e) => {
+                e.style.color = 'slategray';
+                e.style.marginLeft = '-5em';
+            })
+        }
+        else {
+            document.getElementById("sidebar").style.width = width;
+            document.getElementById("mainBody").style.marginLeft = width;
+            document.getElementById("sidebar").style.backgroundColor = "gainsboro";
+            document.getElementById("btn").innerHTML = "X";
+            choices.forEach((e) => {
+                e.style.color = 'black';
+                e.style.marginLeft = '0em';
+            })
+        }
+        open = !open;
+    }
+</script>
