@@ -1,6 +1,9 @@
+<% const bar_color = "slategray"; %>                <%# This is to help make it easier to change bar colors, since they fade to bg color to disappear %>
+<% const bar_bg_color = "gainsboro"; %>
+
 <style>
     #sidebar {
-        background-color: slategray;
+        background-color: <%= bar_color %>;
         top: 0;
         height: 200%;
         width: 2em;
@@ -26,6 +29,7 @@
         top: 0;
         font-size: 25px;
         padding-right:.4em;
+        transition: 0.2s;
     }
     #mainBody {
         transition:0.2s;
@@ -33,14 +37,16 @@
         overflow-x: hidden;
     }
     #sidebar .choice {
+        width:0;
+        transition:0.2s;
         margin-left: -5em;
-        margin-top:0.1em;
+        margin-top: 0.1em;
         margin-bottom: 0.1em;
         padding-top: 0.5em;
         padding-bottom: 0.5em;
         font-size: 25px;
-        color: slategray;
-        background-color: slategray;
+        color: <%= bar_color %>;
+        background-color: <%= bar_color %>;
     }
 
 </style>
@@ -49,10 +55,10 @@
     <div id="btn" onclick="navUpdt()">
         &equiv;
     </div>
-        <div class="choice">Home</div>
-        <div class="choice">Users</div>
-        <div class="choice">About</div>
-        <div class="choice">Help</div>
+    <a class="choice" href="/home"><div class="choice">Home</div></a>
+    <a class="choice" href="/users"><div class="choice">Users</div></a>
+    <a class="choice" href="/about"><div class="choice">About</div></a>
+    <a class="choice" href="/help"><div class="choice">Help</div></a>
 </div>
 
 <script>
@@ -66,21 +72,23 @@
         if (open) {
             document.getElementById("sidebar").style.width = "2em";
             document.getElementById("mainBody").style.marginLeft = "2em";
-            document.getElementById("sidebar").style.backgroundColor = "slategray";
+            document.getElementById("sidebar").style.backgroundColor = "<%= bar_color %>";
             document.getElementById("btn").innerHTML = "&equiv;";
             choices.forEach((e) => {
-                e.style.color = 'slategray';
-                e.style.marginLeft = '-5em';
+                e.style.color = "<%= bar_color %>";
+                e.style.marginLeft = '-8em';
+                e.style.width = '0';
             })
         }
         else {
             document.getElementById("sidebar").style.width = width;
             document.getElementById("mainBody").style.marginLeft = width;
-            document.getElementById("sidebar").style.backgroundColor = "gainsboro";
+            document.getElementById("sidebar").style.backgroundColor = "<%= bar_bg_color %>";
             document.getElementById("btn").innerHTML = "X";
             choices.forEach((e) => {
                 e.style.color = 'black';
                 e.style.marginLeft = '0em';
+                e.style.width = 'auto';
             })
         }
         open = !open;
