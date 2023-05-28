@@ -1,0 +1,45 @@
+<head>
+    <link rel="stylesheet" href="index.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+    <div id="mainBody">
+        <%- include('./partials/sidebar.ejs') %>
+        <%- include('./partials/header.ejs') %>
+        <style>
+            #content_body {
+                margin-top: 1em;
+                padding-bottom: 1em;
+            }
+
+            form {
+                font-size: 20px;
+                padding-top: 1em;
+            }
+
+                form input {
+                    margin-top: 1em;
+                    margin-bottom: 1em;
+                }
+        </style>
+        <div id="content_body">
+            <form>
+                <label for="uname">User Name:</label><br />
+                <input type="text" id="uname" name="uname" /><br />
+                <label for="uemail">Email:</label><br />
+                <input type="text" id="uemail" name="uemail" /><br />
+                <label for="upass">Password:</label><br />
+                <input type="text" id="upass" name="upass" /><br />
+                <label for="upass2">Re-enter Password:</label><br />
+                <input type="text" id="upass2" name="upass2" /><br />
+                <input type="submit" value="Create User" />
+            </form>
+            <p>Password must fit the following criteria:</p>
+            <p>Length: 8 characters minimum</p>
+            <p>Characters: 1 Uppercase minimum</p>
+            <p>1 Lowercase minimum</p>
+            <p>1 Special character minimum</p>
+            <p>1 Number minimum</p>
+        </div>
+    </div>
+</body>

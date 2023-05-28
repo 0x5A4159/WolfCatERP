@@ -1,0 +1,37 @@
+<head>
+    <link rel="stylesheet" href="index.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="/signin.js" defer></script>
+</head>
+<body>
+    <div id="mainBody">
+        <%- include('./partials/sidebar.ejs') %>
+        <%- include('./partials/header.ejs') %>
+        <style>
+            #content_body {
+                margin-top: 1em;
+                padding-bottom: 1em;
+            }
+
+            form {
+                font-size: 20px;
+                padding-top: 1em;
+            }
+
+            form input {
+                margin-top: 1em;
+                margin-bottom: 1em;
+            }
+
+        </style>
+        <div id="content_body">
+            <form action="" method="post">
+                <label for="uname">User Name:</label><br />
+                <input type="text" id="uname" name="uname" required /><br />
+                <label for="upass">Password:</label><br />
+                <input type="password" id="upass" name="upass" required/><br />
+                <button id="signinbtn">Sign In</button>
+            </form>
+        </div>
+    </div>
+</body>

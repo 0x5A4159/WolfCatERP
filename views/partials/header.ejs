@@ -1,4 +1,29 @@
+<style>
+    #header {
+        white-space: nowrap;
+        display: flex;
+        background-color: gainsboro;
+        color: black;
+        border-radius: 10px;
+    }
+
+    #header a {
+        margin-left: auto;
+        padding-right: 0.5em;
+        margin-top: 1em;
+    }
+
+    #header h1 {
+        font-size: 40px;
+        top: 50%;
+        text-shadow: 1px 1px 4px slategray;
+        margin-left: 0.5em;
+    }
+</style>
+
 <div id="header">
     <h1>Wolf Cat ERP</h1>
-    <h3> <%= userName.name.length > 0 ? userName.name : "Sign-in" %> </h3>
+    <a href="<%= typeof user !== 'undefined' ? user.userId : '/signin'%>">
+        <h3><%= typeof user !== 'undefined' ? user.userName : "Sign-In" %></h3>
+    </a>
 </div>
