@@ -46,11 +46,19 @@ app.get("/signup", (req, res) => {
 });
 
 app.post("/signin", (req, res) => {
-    //console.log(req.body.uname); // getting raw post from user through post form submit
-    //userexist.check(req.body.uname);
+    user.findOne({ userName: req.body.uname }).then((result) => {
+        if (result) {   // finding a good result
+            console.log('found a good result');
+        }
+        else {  // no result, send a default
+            console.log('found no result');
+        }
+    }).catch((err) => { console.log('error') }); // catch all error handling?
+
     res.redirect('/'); // on complete sign in push to index
 })
 
 app.use((req, res) => {
     res.status(404).render('404');
 });
+
