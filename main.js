@@ -22,10 +22,6 @@ app.use((req, _, next) => {
 })
 
 app.get("/", (req, res) => {
-    //const _ = user.findById('647382229f699428ff7dfc84')     // lazily getting value for testing
-    //    .then((result) => { res.render('index', { user: result }); })
-    //    .catch((err) => { console.log(err); });
-
     res.render('index'); // simulating no user sign-in
 });
 
@@ -45,15 +41,10 @@ app.get("/signup", (req, res) => {
     res.render('signup');
 });
 
-app.post("/signin", (req, res) => {
-    user.findOne({ userName: req.body.uname }).then((result) => {
-        if (result) {   // finding a good result
-            console.log('found a good result');
-        }
-        else {  // no result, send a default
-            console.log('found no result');
-        }
-    }).catch((err) => { console.log('error') }); // catch all error handling?
+app.post("/signin", async (req, res) => {
+    let signinuser = await searchFind(req.body.uname);
+
+    console.log('signinuser = ', signinuser);
 
     res.redirect('/'); // on complete sign in push to index
 })
@@ -62,3 +53,6 @@ app.use((req, res) => {
     res.status(404).render('404');
 });
 
+const searchFind = async (objFind) => {
+    return await user.findOne({ userName: objFind });
+};
