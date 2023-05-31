@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const user = require('./models/userinfo');
+const task = require('./models/tasks');
 const bodyparser = require('body-parser');
 
 const app = express();
@@ -32,6 +33,10 @@ app.get("/home", (_, res) => {
 app.get("/index", (_, res) => {
     res.redirect("/");
 });
+
+app.get("/tasks", (req,res) => {
+    res.render('tasks');
+})
 
 app.get("/signin", (req, res) => {
     res.render('signin');

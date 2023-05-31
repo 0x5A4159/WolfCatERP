@@ -1,0 +1,66 @@
+div .taskList {
+    position:relative;
+    background-color: gainsboro;
+    font-size: 20px;
+    padding: .5em;
+    border-radius: 10px;
+    margin-top: 1em;
+    transition: 0.1s;
+}
+
+div .taskHeader {
+    background-color: gainsboro;
+    font-size: 20px;
+    padding: .5em;
+    border-radius: 10px;
+    margin-top: 1em;
+}
+
+div .taskHeader input {
+    margin-top:20px;
+    font-size:40px;
+    margin-bottom: 20px;
+    width:100%;
+}
+
+div .taskHeader button {
+    background-color: darkgreen;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 25px;
+}
+
+div .taskList:hover {
+    background-color: aliceblue;
+}
+
+div .taskHeader label {
+    font-size: 40px;
+}
+
+div .taskList .taskIndividual {
+    display: flex;
+    align-items: center;
+}
+
+div .taskList .taskIndividual button {
+    position: relative;
+    background-color: darkgreen;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 25px;
+    margin: auto;
+    margin-right: 1em;
+    top:100%;
+    transform: translate(0%,25%); /*Wish I knew why this was working so well*/
+}
+
+div .taskList .taskIndividual h3 {
+    margin-right:2em; /* White space for the side of the task name*/
+}
+
