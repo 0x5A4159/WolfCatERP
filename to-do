@@ -1,0 +1,2 @@
+tasks.ejs:
+	link the datastore ID to the div ID for adding / removing new tasks
