@@ -16,35 +16,30 @@
             </form>
 
         </div>
-        <div class="taskList" id="a29jfas9kdk2mc29ewru9asjd">
+
+        <% if (tasks.length > 0) { %>
+        <% tasks.forEach(task => { %>
+        <div class="taskList" id="<%= task._id %>">
             <div class="taskIndividual">
                 <form action="" method="post">
                     <button id="submitComplete">Done</button>
                 </form>
-                <h3>Task 1</h3>
-                <p>Some small description of...</p>
+                <h3><%= task.toObject().title %></h3>
+                <p><%= task.toObject().description %></p>
             </div>
         </div>
-        <div class="taskList" id="ar3h3rh3rgs33123654grfgfd">
+        <% })} else { %>
+        <div class="taskList" id="0">
             <div class="taskIndividual">
-                <form action="" method="post">
-                    <button id="submitComplete">Done</button>
-                </form>
-                <h3>Task 2</h3>
-                <p>Some small description of...</p>
+                <h3>No tasks</h3>
+
             </div>
         </div>
-        <div class="taskList" id="a2sdfsfdsgshdfshfdgj3rrgd">
-            <div class="taskIndividual">
-                <form action="" method="post">
-                    <button id="submitComplete">Done</button>
-                </form>
-                <h3>Task 3</h3>
-                <p>Some small description of...</p>
-            </div>
-        </div>
+        <% } %>
     </div>
 </body>
+
+<!--To-Do: Change the formatting for accessing fields in an object to not require constant serialization, probably would be more computationally efficient to do it once.-->
 
 <script>
     // Oh, this is ugly

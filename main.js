@@ -34,8 +34,14 @@ app.get("/index", (_, res) => {
     res.redirect("/");
 });
 
-app.get("/tasks", (req,res) => {
-    res.render('tasks');
+app.get("/tasks", (req, res) => {
+    task.find()
+        .then((result) => {
+            res.render('tasks', {tasks: result});
+        })
+        .catch((error) => {
+            console.log('Failed load tasks to /tasks/', error);
+        });
 })
 
 app.get("/signin", (req, res) => {
