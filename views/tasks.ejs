@@ -16,18 +16,19 @@
             </form>
 
         </div>
-
         <% if (tasks.length > 0) { %>
         <% tasks.forEach(task => { %>
+        <% if (!task.toObject().complete) {%>
         <div class="taskList" id="<%= task._id %>">
             <div class="taskIndividual">
                 <form action="" method="post">
-                    <button id="submitComplete">Done</button>
+                    <button type="submit" name="completereq" id="submitComplete" value="<%= task._id %>">Done</button>
                 </form>
                 <h3><%= task.toObject().title %></h3>
                 <p><%= task.toObject().description %></p>
             </div>
         </div>
+        <% } %>
         <% })} else { %>
         <div class="taskList" id="0">
             <div class="taskIndividual">

@@ -9,7 +9,7 @@ const app = express();
 app.set('view engine', 'ejs');
 
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
-    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(8080); })
+    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(8080,'192.168.1.69'); })
     .catch((err) => console.log("Failed connect"));
 
 app.use(bodyparser.urlencoded({ extended: false }));
@@ -32,6 +32,23 @@ app.get("/home", (_, res) => {
 
 app.get("/index", (_, res) => {
     res.redirect("/");
+});
+
+app.post("/tasks", async (req, res) => {
+    const userPost = req.body.completereq;
+
+    console.log('userPost: ', userPost);
+    console.log('typeOf: ', typeof userPost);
+    console.log(userPost === undefined);
+
+    if (userPost === undefined) { res.redirect('/tasks') }
+    else {
+        const document = await task.findById(userPost);
+        document.complete = true;
+        await document.save();
+
+        res.redirect('/tasks');
+    };
 });
 
 app.get("/tasks", (req, res) => {
