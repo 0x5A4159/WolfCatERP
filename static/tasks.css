@@ -23,6 +23,10 @@ div .taskHeader input {
     width:100%;
 }
 
+div .taskHeader #taskDesc {
+    font-size:20px;
+}
+
 div .taskHeader button {
     background-color: darkgreen;
     color: white;
@@ -62,5 +66,16 @@ div .taskList .taskIndividual button {
 
 div .taskList .taskIndividual h3 {
     margin-right:2em; /* White space for the side of the task name*/
+}
+
+.taskJump {
+    text-decoration: none;
+    color:black;
+    transition: 0.2s;
+}
+
+.taskJump:hover {
+    color: slategray;
+    text-decoration: underline;
 }
 

@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const taskSchema = new Schema({
-    title: {type: String, required:true},
-    description: { type: String, required: true },
-    complete: { type: Boolean, required: true },
-});
+    title: { type: String, required: true },
+    description: { type: String, required: true},
+    complete: { type: Boolean, required: true }
+}, {versionKey: false});
 
 const Task = mongoose.model('Task', taskSchema);
 

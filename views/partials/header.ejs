@@ -7,23 +7,42 @@
         border-radius: 10px;
     }
 
-    #header a {
+    .headersignin {
         margin-left: auto;
         padding-right: 0.5em;
         margin-top: 1em;
     }
 
     #header h1 {
+        position:relative;
         font-size: 40px;
         top: 50%;
+        left: 0.5em;
         text-shadow: 1px 1px 4px slategray;
-        margin-left: 0.5em;
     }
 </style>
 
 <div id="header">
-    <h1>Wolf Cat ERP</h1>
-    <a href="<%= typeof user !== 'undefined' ? user.userId : '/signin'%>">
-        <h3><%= typeof user !== 'undefined' ? user.userName : "Sign-In" %></h3>
-    </a>
+    <h1 id="headertext">Wolf Cat ERP</h1>
+    
+    <h3 class="headersignin">
+        <a class="headersignin"href="<%= typeof user !== 'undefined' ? user.userId : '/signin'%>">
+            <%= typeof user !== 'undefined' ? user.userName : "Sign-In" %>
+        </a>
+    </h3>
 </div>
+
+<script>
+    const mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
+    console.log(mobile);
+    if (mobile) {
+        document.getElementById("headertext").style.transform = "translate(-50%,0%)";
+        document.getElementById("headertext").style.left = "50%";
+        const classObjs = document.querySelectorAll(".headersignin");
+        classObjs.forEach((e) => {
+            e.remove();
+        })
+        
+    }
+
+</script>

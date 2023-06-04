@@ -1,0 +1,57 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/index.css" />
+</head>
+
+<style>
+    #taskBody {
+        background-color: gainsboro;
+        border-radius: 10px;
+    }
+    section {
+        margin:.6em;
+        padding:.4em;
+    }
+
+    section .completeSection {
+        display: flex;
+        align-items: center;
+    }
+    
+    #completeImg {
+        min-width: 16px;
+        max-width: 32px;
+        width: 2rem;
+        height:auto;
+        margin-left: 1em;
+    }
+
+</style>
+
+<body>
+    <div id="mainBody">
+        <%- include('./partials/sidebar.ejs') %>
+        <%- include('./partials/header.ejs') %>
+        <div id="taskBody">
+            <section>
+                <h1><%= task.title %></h1>
+                <h3>Task Description:</h3>
+                <p><%= task.description %></p>
+                <br />
+                <br />
+
+                <% if (task.complete) { %>
+                    <div class="completeSection">
+                        <h1>Completed?</h1>
+                        <img id="completeImg" src="https://img.uxwing.com/wp-content/themes/uxwing/download/checkmark-cross/small-check-mark-icon.png" />
+                    </div>
+                <% } else { %>
+                    <div class="completeSection">
+                        <h1>Completed?</h1>
+                        <img id="completeImg" src="https://www.shareicon.net/data/256x256/2016/10/20/846455_letter_512x512.png" />
+                    </div>
+                <% } %>
+            </section>
+        </div>
+     </div>
+</body>

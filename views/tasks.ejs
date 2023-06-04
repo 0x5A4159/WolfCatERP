@@ -1,6 +1,6 @@
 <head>
-    <link rel="stylesheet" href="index.css" />
-    <link rel="stylesheet" href="tasks.css" />
+    <link rel="stylesheet" href="/index.css" />
+    <link rel="stylesheet" href="/tasks.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
@@ -12,10 +12,13 @@
             <form action="" method="post">
                 <label for="taskName">Add Task:</label><br />
                 <input type="text" id="taskAdd" name="taskAdd" required /><br />
+                <lavel for="taskAddDesc">Description:</lavel><br />
+                <input type="text" id="taskDesc" name="taskAddDesc" /><br />
                 <button id="addTaskBtn">Add</button>
             </form>
 
         </div>
+
         <% if (tasks.length > 0) { %>
         <% tasks.forEach(task => { %>
         <% if (!task.toObject().complete) {%>
@@ -24,7 +27,7 @@
                 <form action="" method="post">
                     <button type="submit" name="completereq" id="submitComplete" value="<%= task._id %>">Done</button>
                 </form>
-                <h3><%= task.toObject().title %></h3>
+                <h3><a class="taskJump" href="/tasks/id/<%= task._id %>"><%= task.toObject().title %></a></h3>
                 <p><%= task.toObject().description %></p>
             </div>
         </div>
@@ -33,7 +36,6 @@
         <div class="taskList" id="0">
             <div class="taskIndividual">
                 <h3>No tasks</h3>
-
             </div>
         </div>
         <% } %>

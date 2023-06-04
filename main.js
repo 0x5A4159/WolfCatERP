@@ -9,7 +9,7 @@ const app = express();
 app.set('view engine', 'ejs');
 
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
-    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(8080,'192.168.1.69'); })
+    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(8080,'localhost'); })
     .catch((err) => console.log("Failed connect"));
 
 app.use(bodyparser.urlencoded({ extended: false }));
@@ -36,30 +36,46 @@ app.get("/index", (_, res) => {
 
 app.post("/tasks", async (req, res) => {
     const userPost = req.body.completereq;
+    const userTask = req.body.taskAdd;
 
-    console.log('userPost: ', userPost);
-    console.log('typeOf: ', typeof userPost);
-    console.log(userPost === undefined);
-
-    if (userPost === undefined) { res.redirect('/tasks') }
-    else {
+    if (userPost !== undefined) { // if they press done, userPost will have the id of the task as a value
         const document = await task.findById(userPost);
         document.complete = true;
         await document.save();
+
+        res.redirect('/tasks');
+    }
+    else {
+        const userDesc = (req.body.taskAddDesc.length > 0) ? req.body.taskAddDesc : "No Description"; // ternary default empty string to 'no description'
+        // for SOME REASON, typeof wont work because blank results instantiate as strings. Is this a JavaScript problem or a me problem?
+
+        task.create({ title: userTask, description: userDesc, complete: false });
 
         res.redirect('/tasks');
     };
 });
 
 app.get("/tasks", (req, res) => {
-    task.find()
+    task.find({ complete: false })
         .then((result) => {
-            res.render('tasks', {tasks: result});
+            res.render('tasks', { tasks: result });
         })
         .catch((error) => {
             console.log('Failed load tasks to /tasks/', error);
         });
-})
+});
+
+app.get("/tasks/id/:urlid", (req, res) => { // now supporst ability to view tasks (Yay!)
+    const id_to_find = req.params.urlid;
+    task.findById(id_to_find).then((result) => {
+        res.render('individual_task', { task: result });
+    })
+    .catch((error) => {
+        console.log(error);
+        res.render('404');
+    });
+});
+
 
 app.get("/signin", (req, res) => {
     res.render('signin');
