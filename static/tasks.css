@@ -79,3 +79,20 @@ div .taskList .taskIndividual h3 {
     text-decoration: underline;
 }
 
+.taskHeader h3 {
+    margin:0;
+}
+
+.taskHeader h3 a {
+    color:black;
+    display: inline-flex;
+    float: right;
+    margin: 0;
+    text-decoration: none;
+    transition:0.2s;
+}
+
+.taskHeader h3 a:hover {
+    color:slategray;
+    text-decoration: underline;
+}

@@ -8,30 +8,14 @@
         <%- include('./partials/sidebar.ejs') %>
         <%- include('./partials/header.ejs') %>
 
-        <div class="taskHeader">
-            <h3><a href="/tasks/history">History</a></h3>
-            <form action="" method="post">
-                <label for="taskName">Add Task:</label><br />
-                <input type="text" id="taskAdd" name="taskAdd" required /><br />
-                <lavel for="taskAddDesc">Description:</lavel><br />
-                <input type="text" id="taskDesc" name="taskAddDesc" /><br />
-                <button id="addTaskBtn">Add</button>
-            </form>
-        </div>
-
         <% if (tasks.length > 0) { %>
         <% tasks.forEach(task => { %>
-        <% if (!task.toObject().complete) {%>
         <div class="taskList" id="<%= task._id %>">
             <div class="taskIndividual">
-                <form action="" method="post">
-                    <button type="submit" name="completereq" id="submitComplete" value="<%= task._id %>">Done</button>
-                </form>
                 <h3><a class="taskJump" href="/tasks/id/<%= task._id %>"><%= task.toObject().title %></a></h3>
                 <p><%= task.toObject().description %></p>
             </div>
         </div>
-        <% } %>
         <% })} else { %>
         <div class="taskList" id="0">
             <div class="taskIndividual">
@@ -61,24 +45,4 @@
         }
     });
 
-    async function checkUpdate() {
-        if (document.visibilityState === 'visible') { // least i can do for this terrible way of getting info
-            const fetchValues = await fetch('/tasks/api/fetchAll');
-            const fetchJSON = await fetchValues.json();
-            let taskUpdateList = fetchJSON.taskupdate.sort().toString();
-            const taskCurrentList = Array.from(document.querySelectorAll('.taskList')).map(e => e.id).sort().toString();
-
-            if (taskUpdateList === "") {
-                taskUpdateList = "0";
-            }
-
-            if (taskCurrentList !== taskUpdateList) {
-                window.location.reload(); // this is pretty bad.
-            }
-
-            // this is SUPER not scalable, please fix later
-        };
-    };
-
-    setInterval(checkUpdate, 5000);
 </script>

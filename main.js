@@ -9,7 +9,7 @@ const app = express();
 app.set('view engine', 'ejs');
 
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
-    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(8080,'localhost'); })
+    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(8080,'192.168.1.69'); })
     .catch((err) => console.log("Failed connect"));
 
 app.use(bodyparser.urlencoded({ extended: false }));
@@ -72,10 +72,20 @@ app.get("/tasks/id/:urlid", (req, res) => { // now supporst ability to view task
     })
     .catch((error) => {
         console.log(error);
-        res.render('404');
+        res.redirect('404');
     });
 });
 
+app.get("/tasks/history", (req, res) => {
+    task.find({ complete: true }).then((result) => {
+        console.log(result);
+        res.render('task_history', { tasks: result });
+    })
+        .catch((error) => {
+            console.log(error);
+            res.redirect('404')
+        })
+});
 
 app.get("/signin", (req, res) => {
     res.render('signin');
@@ -83,6 +93,17 @@ app.get("/signin", (req, res) => {
 
 app.get("/signup", (req, res) => {
     res.render('signup');
+});
+
+app.get("/tasks/api/fetchAll", (req, res) => {
+    task.find({ complete: false })
+        .then((result) => {
+            const resfilter = result.map(val => val._id.toString());
+            res.send({ taskupdate: resfilter });
+        })
+        .catch((error) => {
+            console.log('Failed understand fetchAll request', error);
+        });
 });
 
 app.post("/signin", async (req, res) => {
