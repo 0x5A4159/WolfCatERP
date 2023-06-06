@@ -9,7 +9,7 @@ const app = express();
 app.set('view engine', 'ejs');
 
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
-    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(8080,'192.168.1.69'); })
+    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(process.argv[2],process.argv[3]); })
     .catch((err) => console.log("Failed connect"));
 
 app.use(bodyparser.urlencoded({ extended: false }));
@@ -95,11 +95,10 @@ app.get("/signup", (req, res) => {
     res.render('signup');
 });
 
-app.get("/tasks/api/fetchAll", (req, res) => {
+app.get("/tasks/api/fetchAll", (_, res) => {
     task.find({ complete: false })
         .then((result) => {
-            const resfilter = result.map(val => val._id.toString());
-            res.send({ taskupdate: resfilter });
+            res.send(result);
         })
         .catch((error) => {
             console.log('Failed understand fetchAll request', error);

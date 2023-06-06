@@ -19,37 +19,19 @@
             </form>
         </div>
 
-        <% if (tasks.length > 0) { %>
-        <% tasks.forEach(task => { %>
-        <% if (!task.toObject().complete) {%>
-        <div class="taskList" id="<%= task._id %>">
-            <div class="taskIndividual">
-                <form action="" method="post">
-                    <button type="submit" name="completereq" id="submitComplete" value="<%= task._id %>">Done</button>
-                </form>
-                <h3><a class="taskJump" href="/tasks/id/<%= task._id %>"><%= task.toObject().title %></a></h3>
-                <p><%= task.toObject().description %></p>
-            </div>
+        <div id="taskListContainer">
+
         </div>
-        <% } %>
-        <% })} else { %>
-        <div class="taskList" id="0">
-            <div class="taskIndividual">
-                <h3>No tasks</h3>
-            </div>
-        </div>
-        <% } %>
-    </div>
+     </div>
 </body>
 
-<!--To-Do: Change the formatting for accessing fields in an object to not require constant serialization, probably would be more computationally efficient to do it once.-->
-
 <script>
-    // Oh, this is ugly
+    checkUpdate();
+
     addEventListener("resize", (event) => {
         let mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
         const descriptors = document.querySelectorAll(".taskIndividual p");
-        if (mobile) {
+        if (mobile) {                   // This is to make the viewing experience a bit better on vertical devices, sadly this affects vertically oriented monitors
             descriptors.forEach((e) => {
                 e.style.fontSize = '0px';
             });
@@ -62,22 +44,49 @@
     });
 
     async function checkUpdate() {
-        if (document.visibilityState === 'visible') { // least i can do for this terrible way of getting info
-            const fetchValues = await fetch('/tasks/api/fetchAll');
+        if (document.visibilityState === 'visible') { // just so we're not wasting bandwidth for unattended tabs
+            const fetchValues = await fetch('/tasks/api/fetchAll'); // returns all incomplete tasks as json parsable object
             const fetchJSON = await fetchValues.json();
-            let taskUpdateList = fetchJSON.taskupdate.sort().toString();
-            const taskCurrentList = Array.from(document.querySelectorAll('.taskList')).map(e => e.id).sort().toString();
+            const fromUpdate = fetchJSON.map(e => e._id); // just getting the id's from the json
+            const fromBrowser = Array.from(document.querySelectorAll('.taskList')).map(e => e.id); // getting all task id's displayed in browser
 
-            if (taskUpdateList === "") {
-                taskUpdateList = "0";
-            }
+            const toAddArr = fromUpdate.filter(x => !fromBrowser.includes(x));  // filtering to get list of objects to add and remove
+            const toRemoveArr = fromBrowser.filter(x => !fromUpdate.includes(x));
 
-            if (taskCurrentList !== taskUpdateList) {
-                window.location.reload(); // this is pretty bad.
-            }
+            toAddArr.forEach((e) => {
+                jsonParent = fetchJSON.filter((ele, _) => ele._id === e);           // get the json object matching the id and using it to send values to function
+                insertUpdated(e, jsonParent[0].title, jsonParent[0].description);
+            });
 
-            // this is SUPER not scalable, please fix later
+            toRemoveArr.forEach((e) => {
+                removeUpdated(e);
+            });
         };
+    };
+
+    function removeUpdated(id) {
+        const elementToPop = document.getElementById(id);
+        elementToPop.remove();
+    };
+
+    function insertUpdated(id, title, description) {        // doing a really shoddy build of the div and assigning relavent info at the end.
+        const container = document.getElementById("taskListContainer");
+        const outerIndividualDiv = document.createElement("div");
+        const innerIndividualDiv = outerIndividualDiv.appendChild(document.createElement("div"));
+        const innerIndivForm = innerIndividualDiv.appendChild(document.createElement("form"));
+        const innerFormButton = innerIndivForm.appendChild(document.createElement("button"));
+        const innerIndivTitle = innerIndividualDiv.appendChild(document.createElement("h3"));
+        const indivTitleAnchor = innerIndivTitle.appendChild(document.createElement("a"));
+        const indivDescription = innerIndividualDiv.appendChild(document.createElement("p"));
+        innerFormButton.textContent = "Done";
+        indivTitleAnchor.textContent = title;
+        indivDescription.textContent = description
+        Object.assign(outerIndividualDiv, { "id": id, "className": "taskList" });
+        Object.assign(innerIndividualDiv, { "className": "taskIndividual" });
+        Object.assign(innerIndivForm, { "action": " ", "method": "post" });
+        Object.assign(innerFormButton, { "type": "submit", "name": "completereq", "id": "submitComplete", "value": id });
+        Object.assign(indivTitleAnchor, { "className": "taskJump", "href": `/tasks/id/${id}` })
+        container.appendChild(outerIndividualDiv);
     };
 
     setInterval(checkUpdate, 5000);
