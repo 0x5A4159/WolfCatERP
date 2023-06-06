@@ -1,1 +1,4 @@
-node main 8080 localhost
+set SERVERIPADDR=localhost
+set /A SERVERPORT=8080
+
+node main

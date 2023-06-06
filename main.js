@@ -8,8 +8,13 @@ const app = express();
 
 app.set('view engine', 'ejs');
 
+serverport = process.env.SERVERPORT;
+serverip = process.env.SERVERIPADDR;
+
+console.log(serverip, serverport);
+
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
-    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(process.argv[2],process.argv[3]); })
+    .then((result) => { console.log("DB connect on localhost:27017"); app.listen(serverport,serverip); })
     .catch((err) => console.log("Failed connect"));
 
 app.use(bodyparser.urlencoded({ extended: false }));
