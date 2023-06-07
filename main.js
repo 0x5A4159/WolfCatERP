@@ -40,28 +40,6 @@ app.get("/index", (_, res) => {
     res.redirect("/");
 });
 
-app.post("/tasks", async (req, res) => {
-    const userPost = req.body.completereq;
-    const userTask = req.body.taskAdd;
-
-    if (userPost !== undefined) { // if they press done, userPost will have the id of the task as a value
-        const document = await task.findById(userPost);
-        document.complete = true;
-        await document.save();
-
-        res.status(302).json({success: true});
-        //res.redirect('/tasks');
-    }
-    else {
-        const userDesc = (req.body.taskAddDesc.length > 0) ? req.body.taskAddDesc : "No Description"; // ternary default empty string to 'no description'
-        // for SOME REASON, typeof wont work because blank results instantiate as strings. Is this a JavaScript problem or a me problem?
-
-        task.create({ title: userTask, description: userDesc, complete: false });
-
-        res.redirect('/tasks');
-    };
-});
-
 app.get("/tasks", (req, res) => {
     task.find({ complete: false })
         .then((result) => {
@@ -150,6 +128,25 @@ app.post("/signin", async (req, res) => {
 
     res.redirect('/'); // on complete sign in push to index
 })
+
+app.post('/tasks/api/addOne', (req, res) => {
+    const userTitle = req.body.title;
+    let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
+
+    try {
+        task.create({
+            title: userTitle,
+            description: userDesc.length === 0 ? "No description" : userDesc,
+            complete: false
+        }).then((result) => {
+            res.status(200).send({ "success": true, "id": result._id });
+        });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).send({ "success": false, "id": "0"});
+    }
+});
 
 app.use((req, res) => {
     res.status(404).render('404');

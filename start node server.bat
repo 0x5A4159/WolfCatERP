@@ -1,4 +1,4 @@
-set SERVERIPADDR=localhost
+set SERVERIPADDR=192.168.1.69
 set /A SERVERPORT=8080
 
 node main

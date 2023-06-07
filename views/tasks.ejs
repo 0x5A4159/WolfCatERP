@@ -13,7 +13,7 @@
 
         <div class="taskHeader">
             <h3><a href="/tasks/history">History</a></h3>
-            <form action="" method="post">
+            <form action="javascript:sendAddition()" method="post">
                 <label for="taskName">Add Task:</label><br />
                 <input type="text" id="taskAdd" name="taskAdd" required /><br />
                 <lavel for="taskAddDesc">Description:</lavel><br />
@@ -23,18 +23,18 @@
         </div>
 
         <div id="taskListContainer">
-            <!--Natively empty container-->
         </div>
      </div>
 </body>
 
 <script>
+    // <%# There may be a formatter for EJS in visual studio 2021, the // before the code block will work for now %>
     checkUpdate();
 
     addEventListener("resize", (event) => {
         let mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
         const descriptors = document.querySelectorAll(".taskIndividual p");
-        if (mobile) {                   // This is to make the viewing experience a bit better on vertical devices, sadly this affects vertically oriented monitors
+        if (mobile) {
             descriptors.forEach((e) => {
                 e.style.fontSize = '0px';
             });
@@ -47,17 +47,17 @@
     });
 
     async function checkUpdate() {
-        if (document.visibilityState === 'visible') { // just so we're not wasting bandwidth for unattended tabs
-            const fetchValues = await fetch('/tasks/api/fetchAll'); // returns all incomplete tasks as json parsable object
+        if (document.visibilityState === 'visible') {
+            const fetchValues = await fetch('/tasks/api/fetchAll');
             const fetchJSON = await fetchValues.json();
-            const fromUpdate = fetchJSON.map(e => e._id); // just getting the id's from the json
-            const fromBrowser = Array.from(document.querySelectorAll('.taskList')).map(e => e.id); // getting all task id's displayed in browser
+            const fromUpdate = fetchJSON.map(e => e._id);
+            const fromBrowser = Array.from(document.querySelectorAll('.taskList')).map(e => e.id);
 
-            const toAddArr = fromUpdate.filter(x => !fromBrowser.includes(x));  // filtering to get list of objects to add and remove
+            const toAddArr = fromUpdate.filter(x => !fromBrowser.includes(x)); // <%# Filter results into two arrays so we can add and remove divs %>
             const toRemoveArr = fromBrowser.filter(x => !fromUpdate.includes(x));
 
             toAddArr.forEach((e) => {
-                jsonParent = fetchJSON.filter((ele, _) => ele._id === e);           // get the json object matching the id and using it to send values to function
+                jsonParent = fetchJSON.filter((ele, _) => ele._id === e);
                 insertUpdated(e, jsonParent[0].title, jsonParent[0].description);
             });
 
@@ -65,6 +65,31 @@
                 removeUpdated(e);
             });
         };
+    };
+
+    async function sendAddition() {
+        const title = document.getElementById("taskAdd").value;
+        const description = document.getElementById("taskDesc").value;
+
+        const sendData = {"title": title, "description": description}
+        const fetchSend = await fetch('/tasks/api/addOne/', {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sendData)
+        });
+
+        const fetchJSON = await fetchSend.json();
+
+        if (fetchJSON.success) {
+            insertUpdated(fetchJSON.id, title, description.length === 0 ? "No description" : description);
+        }
+        else {
+            alert(`Could not insert the task ${title}`);
+        }
+
     };
 
     function removeUpdated(id) {
@@ -80,7 +105,7 @@
         };
     };
 
-    function insertUpdated(id, title, description) {        // doing a really shoddy build of the div and assigning relavent info at the end.
+    function insertUpdated(id, title, description) { // <%# Building the div and assigning formatting classnames and id's %>
         const container = document.getElementById("taskListContainer");
         const outerIndividualDiv = document.createElement("div");
         const innerIndividualDiv = outerIndividualDiv.appendChild(document.createElement("div"));
@@ -89,6 +114,7 @@
         const innerIndivTitle = innerIndividualDiv.appendChild(document.createElement("h3"));
         const indivTitleAnchor = innerIndivTitle.appendChild(document.createElement("a"));
         const indivDescription = innerIndividualDiv.appendChild(document.createElement("p"));
+
         innerFormButton.textContent = "Done";
         indivTitleAnchor.textContent = title;
         indivDescription.textContent = description
@@ -97,6 +123,7 @@
         Object.assign(innerIndivForm, { "action": `javascript:sendRemoval('${id}')`, "method": "post" });
         Object.assign(innerFormButton, { "type": "submit", "name": "completereq", "id": "submitComplete", "value": id });
         Object.assign(indivTitleAnchor, { "className": "taskJump", "href": `/tasks/id/${id}` })
+
         if (mobile) {
             indivDescription.style.fontSize = "0px"; // Need a better way of formatting this stuff.
         };
