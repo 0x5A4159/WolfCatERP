@@ -26,10 +26,7 @@
     </div>
 </body>
 
-<!--To-Do: Change the formatting for accessing fields in an object to not require constant serialization, probably would be more computationally efficient to do it once.-->
-
 <script>
-    // Oh, this is ugly
     addEventListener("resize", (event) => {
         let mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
         const descriptors = document.querySelectorAll(".taskIndividual p");

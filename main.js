@@ -83,7 +83,6 @@ app.get("/tasks/id/:urlid", (req, res) => { // now supporst ability to view task
 
 app.get("/tasks/history", (req, res) => {
     task.find({ complete: true }).then((result) => {
-        console.log(result);
         res.render('task_history', { tasks: result });
     })
         .catch((error) => {
