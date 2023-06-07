@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const user = require('./models/userinfo');
 const task = require('./models/tasks');
 const bodyparser = require('body-parser');
+const net = require('net');
 
 const app = express();
 
@@ -48,7 +49,8 @@ app.post("/tasks", async (req, res) => {
         document.complete = true;
         await document.save();
 
-        res.redirect('/tasks');
+        res.status(302).json({success: true});
+        //res.redirect('/tasks');
     }
     else {
         const userDesc = (req.body.taskAddDesc.length > 0) ? req.body.taskAddDesc : "No Description"; // ternary default empty string to 'no description'
@@ -99,6 +101,22 @@ app.get("/signup", (req, res) => {
     res.render('signup');
 });
 
+app.get("/rustapp", (req, res) => {
+    let tcpClient = new net.Socket();
+    const startTime = performance.now();
+
+    tcpClient.connect(12500, '127.0.0.1', () => {
+        
+    });
+    tcpClient.on('data', (data) => {
+        res.send(data.toString());
+    });
+    tcpClient.on('close', () => {
+        const endTime = performance.now();
+        console.log(endTime - startTime);
+    });
+});
+
 app.get("/tasks/api/fetchAll", (_, res) => {
     task.find({ complete: false })
         .then((result) => {
@@ -109,8 +127,24 @@ app.get("/tasks/api/fetchAll", (_, res) => {
         });
 });
 
+app.get("/tasks/api/delOne/:urlid", (req, res) => { // add user authentication so random requests cant be made, or invalid power requests
+    task.findById(req.params.urlid).then(async (result) => {
+        if (result) {
+            result.complete = true;
+            await result.save();
+            res.status(200).json({ success: true });
+        }
+        else {  // for bad requests
+            res.status(404).json({ success: false });
+        }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+});
+
 app.post("/signin", async (req, res) => {
-    let signinuser = await searchFind(req.body.uname);
+    let signinuser = await searchFind(req.params.urlid);
 
     console.log('signinuser = ', signinuser);
 

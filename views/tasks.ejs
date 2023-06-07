@@ -3,6 +3,9 @@
     <link rel="stylesheet" href="/tasks.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
+
+<%# The done buttons send a fetch request to /tasks/api/delOne/(taskid) which will set the complete status to true, and send back a status so that the div can be removed correctly %>
+
 <body>
     <div id="mainBody">
         <%- include('./partials/sidebar.ejs') %>
@@ -20,7 +23,7 @@
         </div>
 
         <div id="taskListContainer">
-
+            <!--Natively empty container-->
         </div>
      </div>
 </body>
@@ -69,6 +72,14 @@
         elementToPop.remove();
     };
 
+    async function sendRemoval(id) {
+        const fetchId = await fetch(`/tasks/api/delOne/${id}`);
+        const fetchJSON = await fetchId.json();
+        if (fetchJSON.success) {
+            removeUpdated(id);
+        };
+    };
+
     function insertUpdated(id, title, description) {        // doing a really shoddy build of the div and assigning relavent info at the end.
         const container = document.getElementById("taskListContainer");
         const outerIndividualDiv = document.createElement("div");
@@ -83,9 +94,12 @@
         indivDescription.textContent = description
         Object.assign(outerIndividualDiv, { "id": id, "className": "taskList" });
         Object.assign(innerIndividualDiv, { "className": "taskIndividual" });
-        Object.assign(innerIndivForm, { "action": " ", "method": "post" });
+        Object.assign(innerIndivForm, { "action": `javascript:sendRemoval('${id}')`, "method": "post" });
         Object.assign(innerFormButton, { "type": "submit", "name": "completereq", "id": "submitComplete", "value": id });
         Object.assign(indivTitleAnchor, { "className": "taskJump", "href": `/tasks/id/${id}` })
+        if (mobile) {
+            indivDescription.style.fontSize = "0px"; // Need a better way of formatting this stuff.
+        };
         container.appendChild(outerIndividualDiv);
     };
 
