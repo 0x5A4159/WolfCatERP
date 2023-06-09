@@ -53,7 +53,8 @@
             const fromUpdate = fetchJSON.map(e => e._id);
             const fromBrowser = Array.from(document.querySelectorAll('.taskList')).map(e => e.id);
 
-            const toAddArr = fromUpdate.filter(x => !fromBrowser.includes(x)); // <%# Filter results into two arrays so we can add and remove divs %>
+            // <%# Filter results into two arrays so we can add and remove divs %>
+            const toAddArr = fromUpdate.filter(x => !fromBrowser.includes(x)); 
             const toRemoveArr = fromBrowser.filter(x => !fromUpdate.includes(x));
 
             toAddArr.forEach((e) => {
@@ -68,10 +69,10 @@
     };
 
     async function sendAddition() {
-        const title = document.getElementById("taskAdd").value;
-        const description = document.getElementById("taskDesc").value;
+        let title = document.getElementById("taskAdd");
+        let description = document.getElementById("taskDesc");
 
-        const sendData = {"title": title, "description": description}
+        const sendData = {"title": title.value, "description": description.value}
         const fetchSend = await fetch('/tasks/api/addOne/', {
             method: "POST",
             headers: {
@@ -84,10 +85,12 @@
         const fetchJSON = await fetchSend.json();
 
         if (fetchJSON.success) {
-            insertUpdated(fetchJSON.id, title, description.length === 0 ? "No description" : description);
+            insertUpdated(fetchJSON.id, title.value, description.value.length === 0 ? "No description" : description.value);
+            title.value = "";
+            description.value = "";
         }
         else {
-            alert(`Could not insert the task ${title}`);
+            alert(`Could not insert the task ${title.value}, may be sending too quickly`);
         }
 
     };
@@ -98,12 +101,25 @@
     };
 
     async function sendRemoval(id) {
-        const fetchId = await fetch(`/tasks/api/delOne/${id}`);
-        const fetchJSON = await fetchId.json();
+        const sendData = { "popid": id };
+        const fetchSend = await fetch('/tasks/api/delOne/', {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sendData)
+        });
+
+        const fetchJSON = await fetchSend.json();
+
         if (fetchJSON.success) {
             removeUpdated(id);
-        };
-    };
+        }
+        else {
+            alert("Could not remove, you may be trying to remove too quickly.")
+        }
+    }
 
     function insertUpdated(id, title, description) { // <%# Building the div and assigning formatting classnames and id's %>
         const container = document.getElementById("taskListContainer");

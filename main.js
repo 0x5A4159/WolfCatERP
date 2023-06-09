@@ -18,6 +18,8 @@ const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
 const server = https.createServer({ key: key, cert: cert }, app);
 
+let userStat = {};
+
 console.log(serverip, serverport);
 
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
@@ -30,9 +32,20 @@ app.use(bodyparser.json());
 app.use(express.static('static'));
 
 app.use((req, _, next) => {
-    console.log(req.protocol + '://' + req.get('host') + req.originalUrl); // fully qualified url
+    userRequest = req.protocol + '://' + req.get('host') + req.originalUrl;
+    if (typeof userStat[req.socket.remoteAddress] !== "undefined") {
+        if (typeof userStat[req.socket.remoteAddress][userRequest] !== "undefined") {
+            userStat[req.socket.remoteAddress][userRequest] += 1;
+        }
+        else {
+            userStat[req.socket.remoteAddress][userRequest] = 1;
+        };
+    }
+    else {
+        userStat[req.socket.remoteAddress] = {};
+    }
     next();
-})
+});
 
 app.get("/", (req, res) => {
     res.render('index'); // simulating no user sign-in
@@ -56,7 +69,7 @@ app.get("/tasks", (req, res) => {
         });
 });
 
-app.get("/tasks/id/:urlid", (req, res) => { // now supporst ability to view tasks (Yay!)
+app.get("/tasks/id/:urlid", (req, res) => {
     const id_to_find = req.params.urlid;
     task.findById(id_to_find).then((result) => {
         res.render('individual_task', { task: result });
@@ -111,20 +124,36 @@ app.get("/tasks/api/fetchAll", (_, res) => {
         });
 });
 
-app.get("/tasks/api/delOne/:urlid", (req, res) => { // add user authentication so random requests cant be made, or invalid power requests
-    task.findById(req.params.urlid).then(async (result) => {
-        if (result) {
-            result.complete = true;
-            await result.save();
-            res.status(200).json({ success: true });
+app.post('/tasks/api/delOne', (req, res) => {
+    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
+        res.status(400).json({ success: false });
+    }
+    else {
+        try {
+            task.findById(req.body.popid).then(async (result) => {
+                if (result) {
+                    result.complete = true
+                    await result.save()
+                    res.status(200).json({ success: true });
+                }
+                else {
+                    res.status(403).json({ success: false });
+                }
+            })
+                .catch((error) => {
+                    console.log(error);
+                })
         }
-        else {  // for bad requests
-            res.status(404).json({ success: false });
+        catch {
+            res.status(500).json({ success: false });
         }
-    })
-    .catch((error) => {
-        console.log(error);
-    });
+    }
+});
+
+app.get("/admin/stats", (req, res) => {
+    if (req.socket.remoteAddress === process.env.SERVERIPADDR) {
+        res.send(userStat);
+    }
 });
 
 app.post("/signin", async (req, res) => {
@@ -136,21 +165,26 @@ app.post("/signin", async (req, res) => {
 })
 
 app.post('/tasks/api/addOne', (req, res) => {
-    const userTitle = req.body.title;
-    let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
-
-    try {
-        task.create({
-            title: userTitle,
-            description: userDesc.length === 0 ? "No description" : userDesc,
-            complete: false
-        }).then((result) => {
-            res.status(200).send({ "success": true, "id": result._id });
-        });
+    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
+        res.status(400).json({ success: false });
     }
-    catch (err) {
-        console.log(err);
-        res.status(500).send({ "success": false, "id": "0"});
+    else {
+        const userTitle = req.body.title;
+        let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
+
+        try {
+            task.create({
+                title: userTitle,
+                description: userDesc.length === 0 ? "No description" : userDesc,
+                complete: false
+            }).then((result) => {
+                res.status(200).send({ "success": true, "id": result._id });
+            });
+        }
+        catch (err) {
+            console.log(err);
+            res.status(500).send({ "success": false, "id": "0" });
+        }
     }
 });
 
@@ -161,3 +195,7 @@ app.use((req, res) => {
 const searchFind = async (objFind) => {
     return await user.findOne({ userName: objFind });
 };
+
+setInterval(() => {
+    userStat = {};
+}, 30_000);
