@@ -6,6 +6,7 @@ div .taskList {
     border-radius: 10px;
     margin-top: 1em;
     transition: 0.1s;
+    display:flex;
 }
 
 div .taskHeader {
@@ -45,9 +46,9 @@ div .taskHeader label {
     font-size: 40px;
 }
 
-div .taskList .taskIndividual {
-    display: flex;
-    align-items: center;
+div .taskList .taskCreateDate {
+    margin-left: auto;
+    font-size: 15px;
 }
 
 div .taskList .taskIndividual button {
@@ -58,10 +59,32 @@ div .taskList .taskIndividual button {
     text-decoration: none;
     display: inline-block;
     font-size: 25px;
-    margin: auto;
     margin-right: 1em;
-    top:100%;
-    transform: translate(0%,25%); /*Wish I knew why this was working so well*/
+    margin-top: 0px;
+    margin-bottom: 0px;
+    border-radius:50px;
+    padding-left:20px;
+    padding-right:20px;
+    padding-top: 10px;
+    padding-bottom:10px;
+    border: solid;
+    border-color:black;
+}
+
+div .taskList .taskIndividual {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width:100%;
+    justify-content:space-between;
+}
+
+div .taskList .taskDescriptionClass {
+    flex:1;
+}
+
+div .taskList .taskIndividual form {
+    margin: 0 auto;
 }
 
 div .taskList .taskIndividual h3 {

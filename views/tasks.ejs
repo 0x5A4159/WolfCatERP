@@ -59,7 +59,8 @@
 
             toAddArr.forEach((e) => {
                 jsonParent = fetchJSON.filter((ele, _) => ele._id === e);
-                insertUpdated(e, jsonParent[0].title, jsonParent[0].description);
+                const createdDate = new Date(jsonParent[0].createdate)
+                insertUpdated(e, jsonParent[0].title, jsonParent[0].description, createdDate);
             });
 
             toRemoveArr.forEach((e) => {
@@ -85,7 +86,8 @@
         const fetchJSON = await fetchSend.json();
 
         if (fetchJSON.success) {
-            insertUpdated(fetchJSON.id, title.value, description.value.length === 0 ? "No description" : description.value);
+            const createdDate = new Date(fetchJSON.createdate)
+            insertUpdated(fetchJSON.id, title.value, description.value.length === 0 ? "No description" : description.value, createdDate);
             title.value = "";
             description.value = "";
         }
@@ -121,7 +123,7 @@
         }
     }
 
-    function insertUpdated(id, title, description) { // <%# Building the div and assigning formatting classnames and id's %>
+    function insertUpdated(id, title, description, createdate) { // <%# Building the div and assigning formatting classnames and id's %>
         const container = document.getElementById("taskListContainer");
         const outerIndividualDiv = document.createElement("div");
         const innerIndividualDiv = outerIndividualDiv.appendChild(document.createElement("div"));
@@ -130,15 +132,19 @@
         const innerIndivTitle = innerIndividualDiv.appendChild(document.createElement("h3"));
         const indivTitleAnchor = innerIndivTitle.appendChild(document.createElement("a"));
         const indivDescription = innerIndividualDiv.appendChild(document.createElement("p"));
+        const indivCreateDate = innerIndividualDiv.appendChild(document.createElement("h4"));
 
         innerFormButton.textContent = "Done";
         indivTitleAnchor.textContent = title;
-        indivDescription.textContent = description
+        indivDescription.textContent = description;
+        indivCreateDate.textContent = createdate;
         Object.assign(outerIndividualDiv, { "id": id, "className": "taskList" });
         Object.assign(innerIndividualDiv, { "className": "taskIndividual" });
         Object.assign(innerIndivForm, { "action": `javascript:sendRemoval('${id}')`, "method": "post" });
         Object.assign(innerFormButton, { "type": "submit", "name": "completereq", "id": "submitComplete", "value": id });
-        Object.assign(indivTitleAnchor, { "className": "taskJump", "href": `/tasks/id/${id}` })
+        Object.assign(indivTitleAnchor, { "className": "taskJump", "href": `/tasks/id/${id}` });
+        Object.assign(indivDescription, { "className": "taskDescriptionClass" });
+        Object.assign(indivCreateDate, { "className": "taskCreateDate" });
 
         if (mobile) {
             indivDescription.style.fontSize = "0px"; // Need a better way of formatting this stuff.

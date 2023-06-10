@@ -14,6 +14,8 @@ app.set('view engine', 'ejs');
 serverport = process.env.SERVERPORT;
 serverip = process.env.SERVERIPADDR;
 
+console.log();
+
 const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
 const server = https.createServer({ key: key, cert: cert }, app);
@@ -173,12 +175,14 @@ app.post('/tasks/api/addOne', (req, res) => {
         let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
 
         try {
+            successcreatedate = Date.now()
             task.create({
                 title: userTitle,
                 description: userDesc.length === 0 ? "No description" : userDesc,
-                complete: false
+                complete: false,
+                createdate: successcreatedate
             }).then((result) => {
-                res.status(200).send({ "success": true, "id": result._id });
+                res.status(200).send({ "success": true, "id": result._id, "createdate": successcreatedate});
             });
         }
         catch (err) {
