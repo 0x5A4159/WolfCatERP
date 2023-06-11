@@ -23,15 +23,15 @@
                 }
         </style>
         <div id="content_body">
-            <form>
+            <form action="javascript:sendSignUp()" method="post">
                 <label for="uname">User Name:</label><br />
                 <input type="text" id="uname" name="uname" /><br />
                 <label for="uemail">Email:</label><br />
                 <input type="text" id="uemail" name="uemail" /><br />
                 <label for="upass">Password:</label><br />
-                <input type="text" id="upass" name="upass" /><br />
+                <input minlength="8" type="password" id="upass" name="upass" /><br />
                 <label for="upass2">Re-enter Password:</label><br />
-                <input type="text" id="upass2" name="upass2" /><br />
+                <input minlength="8" type="password" id="upass2" name="upass2" /><br />
                 <input type="submit" value="Create User" />
             </form>
             <p>Password must fit the following criteria:</p>
@@ -42,4 +42,46 @@
             <p>1 Number minimum</p>
         </div>
     </div>
+
+    <script>
+        async function sendSignUp() {
+            let userName = document.getElementById("uname");
+            let userEmail = document.getElementById("uemail")
+            let userPass = document.getElementById("upass");
+            let userConfirm = document.getElementById("upass2");
+
+            if (userPass.value !== userConfirm.value) {
+                alert('Passwords must match.');
+            }
+            else {
+                const sendData = {
+                    "userName": userName.value,
+                    "userEmail": userEmail.value,
+                    "userPass": userPass.value
+                };
+
+                const fetchSend = await fetch('/signup', {
+                    method: "POST",
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(sendData)
+                });
+
+                const fetchJSON = await fetchSend.json();
+
+                if (fetchJSON.success) {
+                    alert('User created!');
+                    window.location.replace('/') // redirect to home on success
+                }
+                else {
+                    alert(`Sorry, request couldn't be completed: ${fetchJSON.message}`);
+                    location.reload();
+                }
+            }
+
+        }
+    </script>
+
 </body>
