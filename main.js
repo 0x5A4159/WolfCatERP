@@ -14,6 +14,7 @@ const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
 const session = require('express-session');
 const server = https.createServer({ key: key, cert: cert }, app);
+const bcrypt = require('bcryptjs');
 let userStat = {};
 
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
@@ -152,24 +153,25 @@ app.post("/signup", async (req, res) => {
     if (passwordValidator(req.body.userPass)) {
         if (emailValidator(req.body.userEmail)) {
             let isUserExist = await user.findOne({ userEmail: req.body.userEmail });
-            let maxUserID = await user.find().sort({ userID: -1 }).limit(1);
+            let latestUser = await user.find().sort({ userID: -1 }).limit(1);
 
-            console.log(typeof maxUserID, maxUserID);
+            const maxUserID = typeof latestUser[0] === "undefined" ? 0 : latestUser[0].userID;
 
             if (isUserExist === null) {
-                user.create({
+                const hashedPass = await bcrypt.hash(req.body.userPass, 10);
+                await user.create({
                     userName: req.body.userName.toLowerCase(),
                     userEmail: req.body.userEmail.toLowerCase(),
-                    userPass: req.body.userPass,    // TO-DO: salt and hash this password with bcrypt or similar library
+                    userPass: hashedPass,
                     userSession: "",
                     userRole: 1,
-                    userID: 1
+                    userID: maxUserID + 1
                 }).then((result) => {
-                    res.status(200).send({ "success": true});
+                    res.status(201).send({ "success": true });
                 }).catch((err) => {
                     console.log("Couldn't create new member");
                     res.status(500).send({ "success": false });
-                })
+                });
             }
             else {
                 res.send({ "success": false, "message": "Email already in use" });
@@ -188,7 +190,9 @@ app.post("/signup", async (req, res) => {
 app.post("/signin", async (req, res) => {
     const userObj = await user.findOne({ "userName": req.body.userName.toLowerCase() });
     if (userObj !== null) {
-        if (req.body.userPass === userObj.userPass) { // implement hashing
+        const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
+        if (passMatch) { // implement hashing
+            req.session.isAuth = true;
             res.status(200).send({ "success": true, "message": "Successfully signed in." });
         }
         else {
