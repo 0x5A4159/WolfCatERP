@@ -25,7 +25,7 @@
 
         </style>
         <div id="content_body">
-            <form action="" method="post">
+            <form action="javascript:sendSignIn()" method="post">
                 <label for="uname">User Name:</label><br />
                 <input type="text" id="uname" name="uname" required /><br />
                 <label for="upass">Password:</label><br />
@@ -34,4 +34,35 @@
             </form>
         </div>
     </div>
+
+
+    <script>
+        async function sendSignIn() {
+            let userName = document.getElementById("uname").value;
+            let userPass = document.getElementById("upass").value;
+
+            const sendData = { "userName": userName, "userPass": userPass };
+
+            const fetchSend = await fetch('/signin', {
+                method: "POST",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(sendData)
+            });
+
+            const fetchJSON = await fetchSend.json();
+
+            if (fetchJSON.success) {
+                alert(`Signin Success, welcome ${userName}!`);
+                window.location.replace('/') // redirect to home on success
+            }
+            else {
+                alert(`Sorry, request couldn't be completed: ${fetchJSON.message}`);
+                location.reload();
+            }
+        }
+
+    </script>
 </body>

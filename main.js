@@ -34,12 +34,11 @@ const redirectToLogin = (req, res, next) => {
     }
 }
 
-
 app.use(session({
     name: 'sid',
     resave: false,
     saveUninitialized: false,
-    secret: 'someSecretValue',
+    secret: 'someTempSecretValue',
     cookie: {
         maxAge: 10000,
         sameSite: true,
@@ -145,7 +144,7 @@ app.get("/tasks/api/fetchAll", (_, res) => {
 
 app.get("/admin/stats", (req, res) => {
     if (req.socket.remoteAddress === process.env.SERVERIPADDR) {
-        res.send(userStat);
+        res.send({"userStat": userStat, "session": req.session });
     }
 });
 
@@ -159,8 +158,8 @@ app.post("/signup", async (req, res) => {
 
             if (isUserExist === null) {
                 user.create({
-                    userName: req.body.userName,
-                    userEmail: req.body.userEmail,
+                    userName: req.body.userName.toLowerCase(),
+                    userEmail: req.body.userEmail.toLowerCase(),
                     userPass: req.body.userPass,    // TO-DO: salt and hash this password with bcrypt or similar library
                     userSession: "",
                     userRole: 1,
@@ -187,11 +186,18 @@ app.post("/signup", async (req, res) => {
 
 
 app.post("/signin", async (req, res) => {
-    let signinuser = await user.findOne({ userName: req.params.urlid });
-
-    console.log('signinuser = ', signinuser);
-
-    res.redirect('/'); // on complete sign in push to index
+    const userObj = await user.findOne({ "userName": req.body.userName.toLowerCase() });
+    if (userObj !== null) {
+        if (req.body.userPass === userObj.userPass) { // implement hashing
+            res.status(200).send({ "success": true, "message": "Successfully signed in." });
+        }
+        else {
+            res.status(404).send({ "success": false, "message": "Incorrect sign-in info." });
+        }
+    }
+    else {
+        res.status(404).send({ "success": false, "message": "Incorrect sign-in info." });
+    }
 })
 
 app.post('/tasks/api/delOne', (req, res) => {
@@ -250,6 +256,8 @@ app.use((req, res) => {
     res.status(404).render('404');
 });
 
+// regex validity checkers
+
 function passwordValidator(password) {
     hasUpper = /[A-Z]/.test(password);
     hasLower = /[a-z]/.test(password);
@@ -263,6 +271,8 @@ function emailValidator(email) {
     emailDomain = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email);
     return emailDomain
 }
+
+// reset userstat every X seconds to help with limiting API usage and keeping track of user requests
 
 setInterval(() => {
     userStat = {};
