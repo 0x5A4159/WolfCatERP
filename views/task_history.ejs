@@ -13,7 +13,9 @@
         <div class="taskList" id="<%= task._id %>">
             <div class="taskIndividual">
                 <h3><a class="taskJump" href="/tasks/id/<%= task._id %>"><%= task.toObject().title %></a></h3>
-                <p><%= task.toObject().description %></p>
+                <p class="taskDescriptionClass"><%= task.toObject().description %></p>
+                <p class="taskCreatedBy">Created by <%= task.toObject().createdby %></p>
+                <h4 class="taskCreateDate"><%= task.toObject().createdate %></h4>
             </div>
         </div>
         <% })} else { %>

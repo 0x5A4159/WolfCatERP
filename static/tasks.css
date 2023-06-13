@@ -17,6 +17,10 @@ div .taskHeader {
     margin-top: 1em;
 }
 
+.taskCreatedBy {
+    margin-right: 2em;
+}
+
 div .taskHeader input {
     margin-top:20px;
     font-size:40px;

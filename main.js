@@ -154,7 +154,7 @@ app.get("/tasks/api/fetchAll", (_, res) => {
         });
 });
 
-app.get("/rustapp", (req, res) => {
+app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a RustLang binary TCP websocket
     let tcpClient = new net.Socket();
     const startTime = performance.now();
 
@@ -272,9 +272,10 @@ app.post('/tasks/api/addOne', (req, res) => {
                 title: userTitle,
                 description: userDesc.length === 0 ? "No description" : userDesc,
                 complete: false,
-                createdate: successcreatedate
+                createdate: successcreatedate,
+                createdby: capitalizeWord(req.session.userName)
             }).then((result) => {
-                res.status(200).send({ "success": true, "id": result._id, "createdate": successcreatedate});
+                res.status(200).send({ "success": true, "id": result._id, "createdate": successcreatedate, "createdby": capitalizeWord(req.session.userName)});
             });
         }
         catch (err) {
