@@ -194,6 +194,7 @@ app.post("/signup", async (req, res) => {
                     userID: maxUserID + 1
                 }).then((result) => {
                     req.session.isAuth = true;
+                    req.session.userName = req.body.userName;
                     res.status(201).send({ "success": true });
                 }).catch((err) => {
                     console.log("Couldn't create new member");

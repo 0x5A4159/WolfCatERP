@@ -77,7 +77,12 @@
                 }
                 else {
                     alert(`Sorry, request couldn't be completed: ${fetchJSON.message}`);
-                    location.reload();
+                    if (fetchJSON.message === 'Issue with Email provided.') {
+                        userEmail.value = "";
+                    }
+                    else if (fetchJSON.message === 'Issue with password provided.') {
+                        userPass.value = "";
+                    }
                 }
             }
 
