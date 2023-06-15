@@ -19,12 +19,18 @@ serverip = process.env.SERVERIPADDR;
 const sessionKeySecret = fs.readFileSync('./rsa/sessiontoken.txt').toString();
 const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
-const server = https.createServer({ key: key, cert: cert }, app);
+const server = https.createServer({
+    key: key,
+    cert: cert
+}, app);
 
 
 // Loading mongodb assets
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
-    .then((result) => { console.log("DB connect on localhost:27017"); server.listen(serverport,serverip); })
+    .then((result) => {
+        console.log("DB connect on localhost:27017");
+        server.listen(serverport, serverip);
+    })
     .catch((err) => console.log("Failed connect"));
 
 app.use(bodyparser.urlencoded({ extended: false }));
@@ -116,7 +122,10 @@ app.get("/signup", (req, res) => {
 app.get("/tasks", isAuth, (req, res) => {
     task.find({ complete: false })
         .then((result) => {
-            res.render('tasks', { tasks: result, user: capitalizeWord(req.session.userName)});
+            res.render('tasks', {
+                tasks: result,
+                user: capitalizeWord(req.session.userName)
+            });
         })
         .catch((error) => {
             console.log('Failed load tasks to /tasks/', error);
@@ -126,7 +135,10 @@ app.get("/tasks", isAuth, (req, res) => {
 app.get("/tasks/id/:urlid", (req, res) => {
     const id_to_find = req.params.urlid;
     task.findById(id_to_find).then((result) => {
-        res.render('individual_task', { task: result, user: capitalizeWord(req.session.userName) });
+        res.render('individual_task', {
+            task: result,
+            user: capitalizeWord(req.session.userName)
+        });
     })
     .catch((error) => {
         console.log(error);
@@ -136,7 +148,10 @@ app.get("/tasks/id/:urlid", (req, res) => {
 
 app.get("/tasks/history", (req, res) => {
     task.find({ complete: true }).then((result) => {
-        res.render('task_history', { tasks: result, user: capitalizeWord(req.session.userName) });
+        res.render('task_history', {
+            tasks: result,
+            user: capitalizeWord(req.session.userName)
+        });
     })
         .catch((error) => {
             console.log(error);
@@ -276,7 +291,12 @@ app.post('/tasks/api/addOne', (req, res) => {
                 createdate: successcreatedate,
                 createdby: capitalizeWord(req.session.userName)
             }).then((result) => {
-                res.status(200).send({ "success": true, "id": result._id, "createdate": successcreatedate, "createdby": capitalizeWord(req.session.userName)});
+                res.status(200).send({
+                    "success": true,
+                    "id": result._id,
+                    "createdate": successcreatedate,
+                    "createdby": capitalizeWord(req.session.userName)
+                });
             });
         }
         catch (err) {
