@@ -10,6 +10,7 @@ const app = express();
 const session = require('express-session');
 const mongodbsession = require('connect-mongodb-session')(session);
 const bcrypt = require('bcryptjs');
+const getRandomKey = require('./helperfuncs')
 let userStat = {};
 
 // initialize view engine and load env variables and needed files
@@ -209,6 +210,7 @@ app.post("/signup", async (req, res) => {
                     userID: maxUserID + 1
                 }).then((result) => {
                     req.session.isAuth = true;
+                    req.session.prototypeSID = getRandomKey();
                     req.session.userName = req.body.userName;
                     // TO-DO: Add session hash token for user authentication, the current session system works but i'm not super familiar with how its functioning at a low level
                     res.status(201).send({ "success": true });
@@ -237,6 +239,7 @@ app.post("/signin", async (req, res) => {
         const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
         if (passMatch) { // implement hashing
             req.session.isAuth = true;
+            req.session.prototypeSID = getRandomKey();
             // TO-DO: Add a hash session ID to validate actions
             req.session.userName = req.body.userName;
             res.status(200).send({ "success": true, "message": "Successfully signed in." });
