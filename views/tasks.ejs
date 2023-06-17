@@ -41,7 +41,11 @@
         }
         else {
             descriptors.forEach((e) => {
-                e.style.fontSize = '20px';
+                if (e.className === 'taskCreateDate') {
+                    e.style.fontSize = '15px';
+                } else {
+                    e.style.fontSize = '20px';
+                }
             });
         }
     });
@@ -134,7 +138,7 @@
         const indivTitleAnchor = innerIndivTitle.appendChild(document.createElement("a"));
         const indivDescription = innerIndividualDiv.appendChild(document.createElement("p"));
         const indivCreatedBy = innerIndividualDiv.appendChild(document.createElement("p"));
-        const indivCreateDate = innerIndividualDiv.appendChild(document.createElement("h4"));
+        const indivCreateDate = innerIndividualDiv.appendChild(document.createElement("p"));
         
 
         innerFormButton.textContent = "Done";
@@ -153,6 +157,8 @@
 
         if (mobile) {
             indivDescription.style.fontSize = "0px"; // Need a better way of formatting this stuff.
+            indivCreateDate.style.fontSize = "0px";
+            indivCreatedBy.style.fontSize = "0px";
         };
         container.appendChild(outerIndividualDiv);
     };

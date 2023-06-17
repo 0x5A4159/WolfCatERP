@@ -10,8 +10,8 @@ const app = express();
 const session = require('express-session');
 const mongodbsession = require('connect-mongodb-session')(session);
 const bcrypt = require('bcryptjs');
-const getRandomKey = require('./helperfuncs')
-let userStat = {};
+const genRandKey = require('./helperfuncs');
+let userStat = {}; // empty object which gets appended with user ip and their requests for last X seconds according to timer at end of page
 
 // initialize view engine and load env variables and needed files
 app.set('view engine', 'ejs');
@@ -24,7 +24,6 @@ const server = https.createServer({
     key: key,
     cert: cert
 }, app);
-
 
 // Loading mongodb assets
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
@@ -117,7 +116,6 @@ app.get("/signup", (req, res) => {
     }
 });
 
-
 // Tasks section
 
 app.get("/tasks", isAuth, (req, res) => {
@@ -202,15 +200,17 @@ app.post("/signup", async (req, res) => {
 
             if (isUserExist === null) {
                 const hashedPass = await bcrypt.hash(req.body.userPass, 10);
+                const secretToken = genRandKey();
                 await user.create({
                     userName: req.body.userName.toLowerCase(),
                     userEmail: req.body.userEmail.toLowerCase(),
                     userPass: hashedPass,
                     userRole: 1,
-                    userID: maxUserID + 1
+                    userID: maxUserID + 1,
+                    userSession: secretToken
                 }).then((result) => {
                     req.session.isAuth = true;
-                    req.session.prototypeSID = getRandomKey();
+                    req.session.prototypeSID = secretToken;
                     req.session.userName = req.body.userName;
                     // TO-DO: Add session hash token for user authentication, the current session system works but i'm not super familiar with how its functioning at a low level
                     res.status(201).send({ "success": true });
@@ -237,11 +237,12 @@ app.post("/signin", async (req, res) => {
     const userObj = await user.findOne({ "userName": req.body.userName.toLowerCase() });
     if (userObj !== null) {
         const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
-        if (passMatch) { // implement hashing
+        if (passMatch) {
+            const secretToken = genRandKey();
             req.session.isAuth = true;
-            req.session.prototypeSID = getRandomKey();
-            // TO-DO: Add a hash session ID to validate actions
+            req.session.prototypeSID = secretToken;
             req.session.userName = req.body.userName;
+            userObj.userSession = secretToken;
             res.status(200).send({ "success": true, "message": "Successfully signed in." });
         }
         else {
