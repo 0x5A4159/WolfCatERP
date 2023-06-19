@@ -17,15 +17,15 @@ function modPow(b, e, m) { // modular exponentiation function to help generate p
     }
 }
 
-function genRandKey() { // uses the modular exponentiation function along with potentially random values to help produce an unpredictable number
-    const bigLimit = BigInt("9".repeat(128)); // limit for modulus, 128bit key
+function genRandKey(maxKeySize) { // uses the modular exponentiation function along with potentially random values to help produce an unpredictable number
+    const bigLimit = BigInt("9".repeat(maxKeySize)); // limit for modulus, 128bit key
     const memoryUsed = os.totalmem() - os.freemem();
     const curTime = Date.now();
     const large_value = BigInt(memoryUsed * curTime)
     let newRand = modPow(13n, large_value, bigLimit);
 
-    if (newRand.toString().length !== 128) { // add 1 to pad for 128 length
-        newRand = BigInt(newRand += "1".repeat(128 - newRand.toString().length));
+    if (newRand.toString().length !== maxKeySize) { // add with number 1 to match maxKeySize length
+        newRand = BigInt(newRand += "1".repeat(maxKeySize - newRand.toString().length));
     }
 
     return newRand.toString(16); // hex value of key

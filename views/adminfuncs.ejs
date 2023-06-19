@@ -1,0 +1,75 @@
+<head>
+    <link rel="stylesheet" href="/index.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        form {
+            background-color:gainsboro;
+            border-radius:1em;
+            margin-top:1em;
+            padding: 1em;
+        }
+
+        form input {
+            margin-top: 20px;
+            font-size: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+    </style>
+
+</head>
+<body>
+    <div id="mainBody">
+        <%- include('./partials/sidebar.ejs') %>
+        <%- include('./partials/header.ejs') %>
+        <div>
+            <form action="javascript:sendFunction()" method="post">
+                <label for="funcName">Function to call:</label><br />
+                <input type="text" id="funcName" name="funcName" required /><br />
+                <lavel for="funcParam">Description:</lavel><br />
+                <input type="text" id="funcParam" name="funcParam" /><br />
+                <button id="funcParam">Call Function</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+<script>
+    addEventListener("resize", (event) => {
+        let mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
+        const descriptors = document.querySelectorAll(".taskIndividual p");
+        if (mobile) {
+            descriptors.forEach((e) => {
+                e.style.fontSize = '0px';
+            });
+        }
+        else {
+            descriptors.forEach((e) => {
+                e.style.fontSize = '20px';
+            });
+        }
+    });
+
+    async function sendFunction() {
+        let funcName = document.getElementById("funcName");
+        let funcParam = document.getElementById("funcParam");
+
+        const sendData = { "funcName": funcName.value, "funcParam": funcParam.value }
+
+        const fetchSend = await fetch('/admin/funcs', {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sendData)
+        });
+
+        const fetchJSON = await fetchSend.json();
+
+        alert(`Success: ${fetchJSON.success}\nMessage: ${fetchJSON.message}`);
+        funcName.value = '';
+        funcParam.value = ''
+        
+    }
+</script>

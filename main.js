@@ -184,9 +184,54 @@ app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a Ru
     });
 });
 
+const isAdmin = async (request) => {
+    isLocalHost = request.socket.remoteAddress === process.env.SERVERIPADDR;
+    isCreator = (await user.findOne({ 'userSession': request.session.prototypeSID })).userName === 'admin';
+    return [isLocalHost, isCreator].every(Boolean);
+}
+
 app.get("/admin/stats", (req, res) => {
-    if (req.socket.remoteAddress === process.env.SERVERIPADDR) {
+    if (isAdmin(req)) {
         res.send({"userStat": userStat, "session": req.session });
+    }
+});
+
+app.get("/admin/funcs", async (req, res) => {
+    if (isAdmin(req)) {
+        res.render('adminfuncs');
+    }
+    else {
+        res.json({"success": false})
+    }
+
+})
+
+app.post("/admin/funcs", async (req, res) => {
+    if (isAdmin(req)) {
+        switch (req.body.funcName) {
+            case 'delManyTasks':
+                if (req.body.funcParam !== '') {
+                    try {
+                        jsonVal = JSON.parse(req.body.funcParam);
+                        await task.deleteMany(jsonVal);
+                        res.json({ "success": true, "message": "called func successfully" })
+                    }
+                    catch {
+                        res.json({"success": false, "message": "Bad formatting on parameters"})
+                    }
+                    
+                }
+                else {
+                    res.json({ "success": false, "message": "parameters were empty." });
+                }
+                break;
+
+            default:
+                res.json({ 'success': false, 'message': 'no known command' });
+        }
+    }
+    else {
+        console.log('failed');
     }
 });
 
@@ -194,13 +239,13 @@ app.post("/signup", async (req, res) => {
     if (passwordValidator(req.body.userPass)) {
         if (emailValidator(req.body.userEmail)) {
             let isUserExist = await user.findOne({ userEmail: req.body.userEmail });
-            let latestUser = await user.find().sort({ userID: -1 }).limit(1);
+            let latestUser = await user.find().sort({ userID: -1 }).limit(1); // will use this to generate new max user id
 
             const maxUserID = typeof latestUser[0] === "undefined" ? 0 : latestUser[0].userID;
 
             if (isUserExist === null) {
                 const hashedPass = await bcrypt.hash(req.body.userPass, 10);
-                const secretToken = genRandKey();
+                const secretToken = genRandKey(32);
                 await user.create({
                     userName: req.body.userName.toLowerCase(),
                     userEmail: req.body.userEmail.toLowerCase(),
@@ -212,7 +257,7 @@ app.post("/signup", async (req, res) => {
                     req.session.isAuth = true;
                     req.session.prototypeSID = secretToken;
                     req.session.userName = req.body.userName;
-                    // TO-DO: Add session hash token for user authentication, the current session system works but i'm not super familiar with how its functioning at a low level
+                    result.save();
                     res.status(201).send({ "success": true });
                 }).catch((err) => {
                     console.log("Couldn't create new member");
@@ -238,11 +283,12 @@ app.post("/signin", async (req, res) => {
     if (userObj !== null) {
         const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
         if (passMatch) {
-            const secretToken = genRandKey();
+            const secretToken = genRandKey(32);
             req.session.isAuth = true;
             req.session.prototypeSID = secretToken;
             req.session.userName = req.body.userName;
             userObj.userSession = secretToken;
+            userObj.save();
             res.status(200).send({ "success": true, "message": "Successfully signed in." });
         }
         else {
@@ -290,20 +336,23 @@ app.post('/tasks/api/addOne', (req, res) => {
 
         try {
             successcreatedate = Date.now()
-            task.create({
-                title: userTitle,
-                description: userDesc.length === 0 ? "No description" : userDesc,
-                complete: false,
-                createdate: successcreatedate,
-                createdby: capitalizeWord(req.session.userName)
-            }).then((result) => {
-                res.status(200).send({
-                    "success": true,
-                    "id": result._id,
-                    "createdate": successcreatedate,
-                    "createdby": capitalizeWord(req.session.userName)
+            createdByUser = user.findOne({ 'userSession': req.session.prototypeSID }).then((sessionUserVal) => {
+                task.create({ // create the task under the name of whoever matches the session id in their cookies
+                    title: userTitle,
+                    description: userDesc.length === 0 ? "No description" : userDesc,
+                    complete: false,
+                    createdate: successcreatedate,
+                    createdby: capitalizeWord(sessionUserVal.userName)
+                }).then((result) => {
+                    res.status(200).send({
+                        "success": true,
+                        "id": result._id,
+                        "createdate": successcreatedate,
+                        "createdby": capitalizeWord(sessionUserVal.userName)
+                    });
                 });
-            });
+            }).catch((err) => { res.status(500).send({"success": false, "message": "Couldn't create task."}) });
+
         }
         catch (err) {
             console.log(err);
