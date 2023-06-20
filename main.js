@@ -226,6 +226,10 @@ app.post("/admin/funcs", async (req, res) => {
                 }
                 break;
 
+            case 'completeAll':
+                await task.updateMany({}, { '$set': { 'complete': true } });
+                break;
+
             default:
                 res.json({ 'success': false, 'message': 'no known command' });
         }
@@ -351,7 +355,10 @@ app.post('/tasks/api/addOne', (req, res) => {
                         "createdby": capitalizeWord(sessionUserVal.userName)
                     });
                 });
-            }).catch((err) => { res.status(500).send({"success": false, "message": "Couldn't create task."}) });
+            }).catch((err) => {
+                console.log(err);
+                res.status(500).send({ "success": false, "message": "Couldn't create task." });
+            });
 
         }
         catch (err) {

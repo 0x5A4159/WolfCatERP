@@ -2,13 +2,36 @@
 	<head>
 		<link rel="stylesheet" href="index.css" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+
+			div #content_body {
+				display:flex;
+				margin-top: 1em;
+				flex-direction:column;
+			}
+			div #content_body h1 {
+				margin-bottom: 0px;
+				margin-top:1em;
+			}
+
+		</style>
 	</head>
 	<body>
 		<div id="mainBody">
 			<%- include('./partials/sidebar.ejs') %>
 			<%- include('./partials/header.ejs') %>
 			<div id="content_body">
-				<%- include('./partials/lorem.ejs') %>
+				<h1>
+					Welcome to Wolf Cat ERP
+				</h1>
+				<h4>
+					What we are:
+				</h4>
+				<p>Wolf Cat ERP is an Enterprise Resource Planner designed to create tasks, and complete them.</p>
+				<p>Wolf Cat ERP is built using HTML, CSS, NodeJS, Express, and MongoDB.</p>
+				<p>The powerful and quick-to-deploy characteristics of Express means that making changes to the site is easy.</p>
+				<p>There's also the possibility of including internal web-sockets for interacting with other web interfaces.</p>
+				<p>You can add tasks by signing up, and heading to the tasks.</p>
 			</div>
 		</div>
 	</body>
