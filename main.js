@@ -42,18 +42,35 @@ app.use(express.static('static'));
 
 app.use(cookieParser());
 
+const validAuthDate = async (SID) => { // checks to see if a session id is older than the expire date
+    const sessionUserObj = await user.findOne({ "userSession.sessionID": SID });
+    return sessionUserObj;
+}
+
 const isAuth = async (req, res, next) => {
     const userSessionID = req.cookies.SID;
-    if (typeof userSessionID !== 'undefined') { // if there's a cookie
-        const userExists = await user.exists({ userSession: userSessionID }); // if we can find a matching session id stored in mongo
-        if (userExists) {
-            next();
+
+    if (typeof userSessionID !== 'undefined') { // if cookie sid is not empty 
+        const userSessionObject = await validAuthDate(userSessionID);
+        if (userSessionObject !== null) { // if there's a valid session
+            if (userSessionObject.userSession.expireDate > Date.now()) { // check to see if it's got a valid expiration date comparison
+                next();
+            }
+            else { // clear cookies from client side and set user's session id to nothing in mongo
+                res.clearCookie('SID');
+                res.clearCookie('USER');
+                userSessionObject.userSession = {};
+                userSessionObject.save();
+                res.redirect('/');
+            }
         }
         else {
-            res.redirect('/404'); // if no user found just kick them to 404
+            res.clearCookie('SID');
+            res.clearCookie('USER');
+            res.redirect('/'); // if no user found just kick to index
         }
     }
-    else {
+    else { // if there's a cookie no cookie, send to the signup page
         res.redirect('/signup');
     }
 };
@@ -183,28 +200,36 @@ app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a Ru
 
 const isAdmin = async (request) => {
     isLocalHost = request.socket.remoteAddress === process.env.SERVERIPADDR;
-    isCreator = (await user.findOne({ 'userSession': request.session.prototypeSID })).userName === 'admin';
+    const creatorFind = await user.findOne({ 'userSession.sessionID': request.cookies.SID });
+    try {
+        isCreator = (creatorFind).userName === 'admin';
+    }
+    catch {
+        return false;
+    }
     return [isLocalHost, isCreator].every(Boolean);
 }
 
-app.get("/admin/stats", (req, res) => {
-    if (isAdmin(req)) {
-        res.send({"userStat": userStat, "session": req.cookies });
+app.get("/admin/stats", async (req, res) => {
+    if (await isAdmin(req)) {
+        res.send({ "userStat": userStat, "session": req.cookies });
+    }
+    else {
+        res.send({ "success": false });
     }
 });
 
 app.get("/admin/funcs", async (req, res) => {
-    if (isAdmin(req)) {
+    if (await isAdmin(req)) {
         res.render('adminfuncs');
     }
     else {
         res.json({"success": false})
     }
-
 })
 
 app.post("/admin/funcs", async (req, res) => {
-    if (isAdmin(req)) {
+    if (await isAdmin(req)) {
         switch (req.body.funcName) {
             case 'delManyTasks':
                 if (req.body.funcParam !== '') {
@@ -227,6 +252,21 @@ app.post("/admin/funcs", async (req, res) => {
                 await task.updateMany({}, { '$set': { 'complete': true } });
                 break;
 
+            case 'logoutUser':
+                if (req.body.funcParam !== '') {
+                    user.findOne({ userName: req.body.funcParam }).then((result) => {
+                        result.userSession = {};
+                        result.save();
+                        res.json({ "success": true, "message": "logged out user successfully" });
+                    }).catch((err) => {
+                        res.json({ "success": false, "message": "couldn't find user" });
+                    })
+                }
+                else {
+                    res.json({ "success": false, "message": "Need to provide a parameter" })
+                }
+                break;
+
             default:
                 res.json({ 'success': false, 'message': 'no known command' });
         }
@@ -239,7 +279,9 @@ app.post("/admin/funcs", async (req, res) => {
 app.post("/signup", async (req, res) => {
     if (passwordValidator(req.body.userPass)) {
         if (emailValidator(req.body.userEmail)) {
-            let isUserExist = await user.findOne({ userEmail: req.body.userEmail });
+
+            let isUserExist = await user.findOne({ userEmail: req.body.userEmail.toLowerCase() });
+
             let latestUser = await user.find().sort({ userID: -1 }).limit(1); // will use this to generate new max user id
 
             const maxUserID = typeof latestUser[0] === "undefined" ? 0 : latestUser[0].userID;
@@ -247,20 +289,20 @@ app.post("/signup", async (req, res) => {
             if (isUserExist === null) {
                 const hashedPass = await bcrypt.hash(req.body.userPass, 10);
                 const secretToken = genRandKey(128);
+                const expireDateCalc = new Date(Date.now() + ONE_MONTH);
                 await user.create({
                     userName: req.body.userName.toLowerCase(),
                     userEmail: req.body.userEmail.toLowerCase(),
                     userPass: hashedPass,
                     userRole: 1,
                     userID: maxUserID + 1,
-                    userSession: secretToken
+                    userSession: { sessionID: secretToken, expireDate: expireDateCalc }
                 }).then((result) => {
-                    res.cookie('SID', secretToken, { expires: new Date(253402300000000) });
-                    res.cookie('USER', req.body.userName, { expires: new Date(253402300000000) });
+                    res.cookie('SID', secretToken, { expires: expireDateCalc});
+                    res.cookie('USER', req.body.userName, { expires: expireDateCalc});
                     result.save();
                     res.status(201).send({ "success": true });
                 }).catch((err) => {
-                    console.log("Couldn't create new member");
                     res.status(500).send({ "success": false });
                 });
             }
@@ -279,24 +321,21 @@ app.post("/signup", async (req, res) => {
 
 
 app.post("/signin", async (req, res) => {
-    const userObj = await user.findOne({ "userName": req.body.userName.toLowerCase() });
-    if (userObj !== null) {
+    await user.findOne({ "userName": req.body.userName.toLowerCase() }).then(async (userObj) => {
         const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
         if (passMatch) {
             const secretToken = genRandKey(128);
-            res.cookie('SID', secretToken, { expires: new Date(253402300000000) });
-            res.cookie('USER', req.body.userName, { expires: new Date(253402300000000) });
-            userObj.userSession = secretToken;
+            const expireDateCalc = new Date(Date.now() + ONE_MONTH);
+            res.cookie('SID', secretToken, { expires: expireDateCalc });
+            res.cookie('USER', req.body.userName, { expires: expireDateCalc });
+            userObj.userSession = { sessionID: secretToken, expireDate: expireDateCalc };
             userObj.save();
             res.status(200).send({ "success": true, "message": "Successfully signed in." });
         }
         else {
             res.status(404).send({ "success": false, "message": "Incorrect sign-in info." });
         }
-    }
-    else {
-        res.status(404).send({ "success": false, "message": "Incorrect sign-in info." });
-    }
+    })
 })
 
 app.post('/tasks/api/delOne', (req, res) => {
@@ -335,7 +374,7 @@ app.post('/tasks/api/addOne', (req, res) => {
 
         try {
             successcreatedate = Date.now()
-            createdByUser = user.findOne({ 'userSession': req.cookies.SID }).then((sessionUserVal) => {
+            createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then((sessionUserVal) => {
                 task.create({ // create the task under the name of whoever matches the session id in their cookies
                     title: userTitle,
                     description: userDesc.length === 0 ? "No description" : userDesc,
