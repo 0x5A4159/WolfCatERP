@@ -11,15 +11,17 @@ const session = require('express-session');
 const mongodbsession = require('connect-mongodb-session')(session);
 const bcrypt = require('bcryptjs');
 const genRandKey = require('./helperfuncs');
+const cookieParser = require('cookie-parser');
 let userStat = {}; // empty object which gets appended with user ip and their requests for last X seconds according to timer at end of page
 
 // initialize view engine and load env variables and needed files
 app.set('view engine', 'ejs');
 serverport = process.env.SERVERPORT;
 serverip = process.env.SERVERIPADDR;
-const sessionKeySecret = fs.readFileSync('./rsa/sessiontoken.txt').toString();
+//const sessionKeySecret = fs.readFileSync('./rsa/sessiontoken.txt').toString();
 const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
+const ONE_MONTH = 1000 * 60 * 60 * 24 * 30;
 const server = https.createServer({
     key: key,
     cert: cert
@@ -38,35 +40,30 @@ app.use(bodyparser.json());
 
 app.use(express.static('static'));
 
-const sessionStore = new mongodbsession({
-    uri: 'mongodb://127.0.0.1:27017/appdb',
-    collection: 'sessions'
-});
+app.use(cookieParser());
 
-// initializing session storage
-
-app.use(session({
-    name: 'sid',
-    resave: false,
-    saveUninitialized: false,
-    secret: sessionKeySecret,
-    store: sessionStore,
-    httpOnly: false,
-    cookie: {
-        maxAge: 1704085200,
-        sameSite: true,
-        secure: 'development'
-    }
-}));
-
-const isAuth = (req, res, next) => {
-    if (req.session.isAuth) {
-        next();
+const isAuth = async (req, res, next) => {
+    const userSessionID = req.cookies.SID;
+    if (typeof userSessionID !== 'undefined') { // if there's a cookie
+        const userExists = await user.exists({ userSession: userSessionID }); // if we can find a matching session id stored in mongo
+        if (userExists) {
+            next();
+        }
+        else {
+            res.redirect('/404'); // if no user found just kick them to 404
+        }
     }
     else {
-        res.redirect('/signin');
+        res.redirect('/signup');
     }
-}
+};
+
+app.get('/setcookie', (req, res) => {
+    const secret_sid = genRandKey(128);
+    res.cookie('SID', secret_sid, { maxAge: ONE_MONTH, isAuth: true });
+    console.log(req.cookies['SID']);
+    res.send('cookie saved');
+});
 
 app.use((req, _, next) => {
     userRequest = req.protocol + '://' + req.get('host') + req.originalUrl;
@@ -87,7 +84,7 @@ app.use((req, _, next) => {
 
 // Basic website pages, login and home
 app.get("/", (req, res) => {
-    res.render('index', {user: capitalizeWord(req.session.userName)});
+    res.render('index', {user: capitalizeWord(req.cookies.USER)});
 });
 
 app.get("/home", (_, res) => {
@@ -99,7 +96,7 @@ app.get("/index", (_, res) => {
 });
 
 app.get("/signin", (req, res) => {
-    if (req.session.isAuth) {
+    if (typeof req.cookies.SID !== 'undefined') {
         res.redirect('/')
     }
     else {
@@ -108,7 +105,7 @@ app.get("/signin", (req, res) => {
 });
 
 app.get("/signup", (req, res) => {
-    if (req.session.isAuth) {
+    if (typeof req.cookies.SID !== 'undefined') {
         res.redirect('/');
     }
     else {
@@ -123,7 +120,7 @@ app.get("/tasks", isAuth, (req, res) => {
         .then((result) => {
             res.render('tasks', {
                 tasks: result,
-                user: capitalizeWord(req.session.userName)
+                user: capitalizeWord(req.cookies.USER)
             });
         })
         .catch((error) => {
@@ -136,7 +133,7 @@ app.get("/tasks/id/:urlid", (req, res) => {
     task.findById(id_to_find).then((result) => {
         res.render('individual_task', {
             task: result,
-            user: capitalizeWord(req.session.userName)
+            user: capitalizeWord(req.cookies.USER)
         });
     })
     .catch((error) => {
@@ -149,7 +146,7 @@ app.get("/tasks/history", (req, res) => {
     task.find({ complete: true }).then((result) => {
         res.render('task_history', {
             tasks: result,
-            user: capitalizeWord(req.session.userName)
+            user: capitalizeWord(req.cookies.USER)
         });
     })
         .catch((error) => {
@@ -192,7 +189,7 @@ const isAdmin = async (request) => {
 
 app.get("/admin/stats", (req, res) => {
     if (isAdmin(req)) {
-        res.send({"userStat": userStat, "session": req.session });
+        res.send({"userStat": userStat, "session": req.cookies });
     }
 });
 
@@ -249,7 +246,7 @@ app.post("/signup", async (req, res) => {
 
             if (isUserExist === null) {
                 const hashedPass = await bcrypt.hash(req.body.userPass, 10);
-                const secretToken = genRandKey(32);
+                const secretToken = genRandKey(128);
                 await user.create({
                     userName: req.body.userName.toLowerCase(),
                     userEmail: req.body.userEmail.toLowerCase(),
@@ -258,9 +255,8 @@ app.post("/signup", async (req, res) => {
                     userID: maxUserID + 1,
                     userSession: secretToken
                 }).then((result) => {
-                    req.session.isAuth = true;
-                    req.session.prototypeSID = secretToken;
-                    req.session.userName = req.body.userName;
+                    res.cookie('SID', secretToken, { expires: new Date(253402300000000) });
+                    res.cookie('USER', req.body.userName, { expires: new Date(253402300000000) });
                     result.save();
                     res.status(201).send({ "success": true });
                 }).catch((err) => {
@@ -287,10 +283,9 @@ app.post("/signin", async (req, res) => {
     if (userObj !== null) {
         const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
         if (passMatch) {
-            const secretToken = genRandKey(32);
-            req.session.isAuth = true;
-            req.session.prototypeSID = secretToken;
-            req.session.userName = req.body.userName;
+            const secretToken = genRandKey(128);
+            res.cookie('SID', secretToken, { expires: new Date(253402300000000) });
+            res.cookie('USER', req.body.userName, { expires: new Date(253402300000000) });
             userObj.userSession = secretToken;
             userObj.save();
             res.status(200).send({ "success": true, "message": "Successfully signed in." });
@@ -340,7 +335,7 @@ app.post('/tasks/api/addOne', (req, res) => {
 
         try {
             successcreatedate = Date.now()
-            createdByUser = user.findOne({ 'userSession': req.session.prototypeSID }).then((sessionUserVal) => {
+            createdByUser = user.findOne({ 'userSession': req.cookies.SID }).then((sessionUserVal) => {
                 task.create({ // create the task under the name of whoever matches the session id in their cookies
                     title: userTitle,
                     description: userDesc.length === 0 ? "No description" : userDesc,
