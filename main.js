@@ -7,8 +7,6 @@ const net = require('net');
 const fs = require('fs');
 const https = require('https');
 const app = express();
-const session = require('express-session');
-const mongodbsession = require('connect-mongodb-session')(session);
 const bcrypt = require('bcryptjs');
 const genRandKey = require('./helperfuncs');
 const cookieParser = require('cookie-parser');
@@ -18,10 +16,10 @@ let userStat = {}; // empty object which gets appended with user ip and their re
 app.set('view engine', 'ejs');
 serverport = process.env.SERVERPORT;
 serverip = process.env.SERVERIPADDR;
-//const sessionKeySecret = fs.readFileSync('./rsa/sessiontoken.txt').toString();
 const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
 const ONE_MONTH = 1000 * 60 * 60 * 24 * 30;
+
 const server = https.createServer({
     key: key,
     cert: cert
@@ -35,7 +33,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/appdb')
     })
     .catch((err) => console.log("Failed connect"));
 
-app.use(bodyparser.urlencoded({ extended: false }));
+//app.use(bodyparser.urlencoded({ extended: false }));
 app.use(bodyparser.json());
 
 app.use(express.static('static'));

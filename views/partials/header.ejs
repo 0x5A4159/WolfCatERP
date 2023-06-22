@@ -30,6 +30,11 @@
             <%= typeof user !== 'undefined' ? user : "Sign-In" %>
         </a>
     </h3>
+    <h4>
+        <a href="javascript:signOut();">
+            <%= typeof user !== 'undefined' ? "Sign-out" : "" %>
+        </a>
+    </h4>
 </div>
 
 <script>
@@ -43,4 +48,14 @@
         })
         
     }
+    <% if (typeof user !== 'undefined') { %>
+        function signOut() {
+            document.cookie.split(";").forEach((c) => {
+                document.cookie = c.replace(/^ +/, "")
+                    .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            location.reload();
+        }
+        <%}%>
+
 </script>
