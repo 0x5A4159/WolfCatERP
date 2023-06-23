@@ -19,6 +19,13 @@ serverip = process.env.SERVERIPADDR;
 const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
 const ONE_MONTH = 1000 * 60 * 60 * 24 * 30;
+const USER_ROLES = new Map([ // mapping numeric roles to role-names
+    [0, 'Admin'],
+    [1, 'Moderator'],
+    [2, 'User'],
+    [3, 'Trouble']
+]);
+
 
 const server = https.createServer({
     key: key,
@@ -128,6 +135,23 @@ app.get("/signup", (req, res) => {
     }
 });
 
+// users section
+
+app.get("/users/:userid", (req, res) => {
+    const userId = req.params.userid;
+    user.findOne({ 'userID': userId })
+        .then((result) => {
+            //res.json({ userName: capitalizeWord(result.userName), userRole: USER_ROLES.get(result.userRole) });
+            res.render('userIndividual', {
+                userName: capitalizeWord(result.userName),
+                userRole: USER_ROLES.get(result.userRole)
+            });
+        })
+        .catch((error) => {
+            res.redirect('/404');
+        });
+});
+
 // Tasks section
 
 app.get("/tasks", isAuth, (req, res) => {
@@ -185,14 +209,14 @@ app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a Ru
     const startTime = performance.now();
 
     tcpClient.connect(12500, '127.0.0.1', () => {
-        
+        console.log('made a link to rustApp');
     });
     tcpClient.on('data', (data) => {
         res.send(data.toString());
     });
     tcpClient.on('close', () => {
         const endTime = performance.now();
-        console.log(endTime - startTime);
+        console.log(`rustapp perf time: ${endTime - startTime}`);
     });
 });
 
@@ -292,9 +316,9 @@ app.post("/signup", async (req, res) => {
                     userName: req.body.userName.toLowerCase(),
                     userEmail: req.body.userEmail.toLowerCase(),
                     userPass: hashedPass,
-                    userRole: 1,
+                    userRole: 2, // Default user role to User (2)
                     userID: maxUserID + 1,
-                    userSession: { sessionID: secretToken, expireDate: expireDateCalc }
+                    userSession: { sessionID: secretToken, expireDate: expireDateCalc } // assign session on signin, good for 1month
                 }).then((result) => {
                     res.cookie('SID', secretToken, { expires: expireDateCalc});
                     res.cookie('USER', req.body.userName, { expires: expireDateCalc});

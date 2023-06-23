@@ -1,0 +1,76 @@
+<html>
+<head>
+    <link rel="stylesheet" href="index.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+
+        body {
+            background-color: #0d1629;
+        }
+
+        .userBox {
+            display:flex;
+            background-color:gainsboro;
+            border-radius: 10px;
+            margin-top: 1em;
+            margin-left: 1em;
+            padding-left: 1em;
+            align-items: center;
+        }
+
+        .userBox #userRole {
+            margin-right: 1em;
+            margin-left: auto;
+        }
+
+        #userAvi {
+            height: 20em;
+            width: 20em;
+            margin-top:1em;
+            border-radius:10px;
+        }
+
+        .userContainer {
+            display:flex;
+            align-items: flex-start;
+        }
+
+        .userInfo {
+            display: flex;
+            padding-right:0px;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .userAboutBox {
+            background-color:gainsboro;
+            margin-top: 1em;
+            margin-left: 1em;
+            border-radius:10px;
+            padding-left:1em;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="mainBody">
+        <%- include('./partials/sidebar.ejs') %>
+        <%- include('./partials/header.ejs') %>
+        <div id="content_body">
+            <div class="userContainer">
+                <img id="userAvi" src="/localimg.png" /> <!-- Will need to replace this with a b64 blob to binary serve from db storage -->
+                <div class="userInfo">
+                    <div class="userBox">
+                        <h1 id="userName"><%= userName %></h1>
+                        <h4 id="userRole"><%= userRole %></h4>
+                    </div>
+                    <div class="userAboutBox">
+                        <h3 id="userSince">User since: </h3>
+                        <h3 id="userBday">Birthday: </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
