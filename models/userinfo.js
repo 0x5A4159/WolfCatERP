@@ -7,7 +7,8 @@ const userSchema = new Schema({
     userRole: { type: Number, required: true },
     userID: { type: Number, required: true },
     userEmail: { type: String, required: true },
-    userSession: {type: Object, required: false}
+    userSession: { type: Object, required: false },
+    userCreated: { type: Date, required: true }
 }, { versionKey: false });
 
 const User = mongoose.model('User', userSchema);

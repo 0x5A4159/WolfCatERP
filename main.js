@@ -144,7 +144,8 @@ app.get("/users/:userid", (req, res) => {
             //res.json({ userName: capitalizeWord(result.userName), userRole: USER_ROLES.get(result.userRole) });
             res.render('userIndividual', {
                 userName: capitalizeWord(result.userName),
-                userRole: USER_ROLES.get(result.userRole)
+                userRole: USER_ROLES.get(result.userRole),
+                userCreated: result.userCreated
             });
         })
         .catch((error) => {
@@ -318,7 +319,8 @@ app.post("/signup", async (req, res) => {
                     userPass: hashedPass,
                     userRole: 2, // Default user role to User (2)
                     userID: maxUserID + 1,
-                    userSession: { sessionID: secretToken, expireDate: expireDateCalc } // assign session on signin, good for 1month
+                    userSession: { sessionID: secretToken, expireDate: expireDateCalc }, // assign session on signin, good for 1month
+                    userCreated: Date.now()
                 }).then((result) => {
                     res.cookie('SID', secretToken, { expires: expireDateCalc});
                     res.cookie('USER', req.body.userName, { expires: expireDateCalc});
