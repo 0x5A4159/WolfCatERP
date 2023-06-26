@@ -50,6 +50,25 @@
             padding-left:1em;
         }
 
+        .userContactBox {
+            background-color:gainsboro;
+            max-width:18em;
+            padding: 1em;
+            padding-top: 1px;
+            border-radius: 10px;
+            margin-top: 1em;
+        }
+
+        .userContactBox h4 {
+            margin-bottom: 0;
+        }
+
+        .userContactBox p {
+            margin-top: 0;
+            margin-bottom: 0;
+            margin-left: 1em;
+        }
+
     </style>
 </head>
 <body>
@@ -67,7 +86,19 @@
                     <div class="userAboutBox">
                         <h3 id="userSince">User since: <%= userCreated %></h3>
                     </div>
+                    <div class="userAboutBox">
+                        <h3>About <%= userName %></h3>
+                        <p>
+                            This is some placeholder text until something can be added to allow for users to declare stuff about them
+                        </p>
+                    </div>
                 </div>
+            </div>
+            <div class="userContactBox">
+                <h4>Pronouns</h4>
+                <p>Place/Holder</p>
+                <h4>Status</h4>
+                <p>PlaceHolder</p>
             </div>
         </div>
     </div>
