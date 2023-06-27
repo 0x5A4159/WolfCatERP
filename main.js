@@ -18,6 +18,7 @@ serverport = process.env.SERVERPORT;
 serverip = process.env.SERVERIPADDR;
 const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
+const default_avatar = fs.readFileSync('./useraviencode.txt');
 const ONE_MONTH = 1000 * 60 * 60 * 24 * 30;
 const USER_ROLES = new Map([ // mapping numeric roles to role-names
     [0, 'Admin'],
@@ -145,7 +146,8 @@ app.get("/users/:userid", (req, res) => {
             res.render('userIndividual', {
                 userName: capitalizeWord(result.userName),
                 userRole: USER_ROLES.get(result.userRole),
-                userCreated: result.userCreated
+                userCreated: result.userCreated,
+                userAvatar: typeof result.userAvatar !== "undefined" & result.userAvatar !== "" ? result.userAvatar : default_avatar
             });
         })
         .catch((error) => {
@@ -320,7 +322,8 @@ app.post("/signup", async (req, res) => {
                     userRole: 2, // Default user role to User (2)
                     userID: maxUserID + 1,
                     userSession: { sessionID: secretToken, expireDate: expireDateCalc }, // assign session on signin, good for 1month
-                    userCreated: Date.now()
+                    userCreated: Date.now(),
+                    userAvatar: ""
                 }).then((result) => {
                     res.cookie('SID', secretToken, { expires: expireDateCalc});
                     res.cookie('USER', req.body.userName, { expires: expireDateCalc});
