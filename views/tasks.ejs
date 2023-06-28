@@ -6,6 +6,23 @@
 
 <%# The done buttons send a fetch request to /tasks/api/delOne/(taskid) which will set the complete status to true, and send back a status so that the div can be removed correctly %>
 
+<style>
+    #creatorCheckbox {
+        font-size: 20px;
+    }
+
+    .checkboxConfirm {
+        display:flex;
+        margin-top: 1em;
+        align-items: center;
+    }
+
+    .checkboxConfirm input {
+        max-width: 1em;
+    }
+
+</style>
+
 <body>
     <div id="mainBody">
         <%- include('./partials/sidebar.ejs') %>
@@ -16,9 +33,13 @@
             <form action="javascript:sendAddition()" method="post">
                 <label for="taskName">Add Task:</label><br />
                 <input type="text" id="taskAdd" name="taskAdd" required /><br />
-                <lavel for="taskAddDesc">Description:</lavel><br />
+                <label for="taskAddDesc">Description:</label><br />
                 <input type="text" id="taskDesc" name="taskAddDesc" /><br />
                 <button id="addTaskBtn">Add</button>
+                <div class="checkboxConfirm">
+                    <label for="onlyCreator" id="creatorCheckbox">Complete only by me</label>
+                    <input type="checkbox" id="onlyCreator" name="onlyCreator" />
+                </div>
             </form>
         </div>
 
@@ -76,8 +97,9 @@
     async function sendAddition() {
         let title = document.getElementById("taskAdd");
         let description = document.getElementById("taskDesc");
+        let onlyCreator = document.getElementById("onlyCreator").checked;
 
-        const sendData = {"title": title.value, "description": description.value}
+        const sendData = {"title": title.value, "description": description.value, "onlyCreator": onlyCreator}
         const fetchSend = await fetch('/tasks/api/addOne/', {
             method: "POST",
             headers: {
@@ -124,7 +146,7 @@
             removeUpdated(id);
         }
         else {
-            alert("Could not remove, you may be trying to remove too quickly.")
+            alert(`Could not remove, ${fetchJSON.message}`)
         }
     }
 

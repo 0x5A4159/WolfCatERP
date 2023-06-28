@@ -367,15 +367,29 @@ app.post("/signin", async (req, res) => {
 
 app.post('/tasks/api/delOne', (req, res) => {
     if (userStat[req.socket.remoteAddress][userRequest] > 5) {
-        res.status(400).json({ success: false });
+        res.status(400).json({ success: false, message: "Removing too fast"});
     }
     else {
         try {
             task.findById(req.body.popid).then(async (result) => {
                 if (result) {
-                    result.complete = true
-                    await result.save()
-                    res.status(200).json({ success: true });
+                    if (result.onlyCreator) {
+                        user.findOne({ userName: result.createdby.toLowerCase() }).then(async (userResult) => {
+                            if (userResult.userSession.sessionID === req.cookies.SID) {
+                                result.complete = true
+                                await result.save();
+                                res.status(200).json({ success: true });
+                            }
+                            else {
+                                res.status(403).json({ success: false, message: "Not the creator of this task"});
+                            }
+                        }).catch((err) => { res.status(500).json({ success: false }) });
+                    }
+                    else {
+                        result.complete = true
+                        await result.save()
+                        res.status(200).json({ success: true });
+                    }
                 }
                 else {
                     res.status(403).json({ success: false });
@@ -407,7 +421,8 @@ app.post('/tasks/api/addOne', (req, res) => {
                     description: userDesc.length === 0 ? "No description" : userDesc,
                     complete: false,
                     createdate: successcreatedate,
-                    createdby: capitalizeWord(sessionUserVal.userName)
+                    createdby: capitalizeWord(sessionUserVal.userName),
+                    onlyCreator: req.body.onlyCreator
                 }).then((result) => {
                     res.status(200).send({
                         "success": true,
