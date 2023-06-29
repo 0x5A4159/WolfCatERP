@@ -81,13 +81,6 @@ const isAuth = async (req, res, next) => {
     }
 };
 
-app.get('/setcookie', (req, res) => {
-    const secret_sid = genRandKey(128);
-    res.cookie('SID', secret_sid, { maxAge: ONE_MONTH, isAuth: true });
-    console.log(req.cookies['SID']);
-    res.send('cookie saved');
-});
-
 app.use((req, _, next) => {
     userRequest = req.protocol + '://' + req.get('host') + req.originalUrl;
     if (typeof userStat[req.socket.remoteAddress] !== "undefined") {
@@ -184,6 +177,20 @@ app.get("/tasks/id/:urlid", (req, res) => {
     });
 });
 
+app.get("/tasks/id/:urlid/edit", (req, res) => {
+    const id_to_find = req.params.urlid;
+    task.findById(id_to_find).then((result) => {
+        res.render('individual_task_edit', {
+            task: result,
+            user: capitalizeWord(req.cookies.USER)
+        });
+    })
+        .catch((error) => {
+            console.log(error);
+            res.redirect('404');
+        });
+});
+
 app.get("/tasks/history", (req, res) => {
     task.find({ complete: true }).then((result) => {
         res.render('task_history', {
@@ -206,6 +213,23 @@ app.get("/tasks/api/fetchAll", (_, res) => {
             console.log('Failed understand fetchAll request', error);
         });
 });
+
+app.post('/tasks/api/editTask', async (req, res) => {
+    // add user authentication
+    createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then(async (sessionUserVal) => {
+        if (req.body.title !== "") {
+            await task.updateOne({ _id: req.body.taskid }, { '$set': { 'title': req.body.title, 'description': req.body.description } });
+            res.status(200).json({ 'success': true, 'message': 'Updated existing task' });
+        }
+        else {
+            res.status(404).json({ 'success': false, 'message': 'Task must have a name' });
+        }
+    }).catch((err) => {
+        console.log(err);
+        res.status(500).send({ "success": false, "message": "Couldn't create task." });
+    });
+});
+
 
 app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a RustLang binary TCP websocket
     let tcpClient = new net.Socket();
@@ -422,7 +446,8 @@ app.post('/tasks/api/addOne', (req, res) => {
                     complete: false,
                     createdate: successcreatedate,
                     createdby: capitalizeWord(sessionUserVal.userName),
-                    onlyCreator: req.body.onlyCreator
+                    onlyCreator: req.body.onlyCreator,
+                    lastEdited: "None"
                 }).then((result) => {
                     res.status(200).send({
                         "success": true,

@@ -1,0 +1,138 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/index.css" />
+</head>
+
+<style>
+    #taskBody {
+        background-color: gainsboro;
+        border-radius: 10px;
+    }
+
+    section {
+        margin: .6em;
+        padding: .4em;
+    }
+
+        section .completeSection {
+            display: flex;
+            align-items: center;
+        }
+
+    #completeImg {
+        min-width: 16px;
+        max-width: 32px;
+        width: 2rem;
+        height: auto;
+        margin-left: 1em;
+    }
+
+    .taskHistoryHeader {
+        display: flex;
+        align-items: center;
+        margin-bottom: -1em;
+    }
+
+    .dateTimeHeader {
+        margin-right: 0;
+        margin-left: auto;
+    }
+
+    .completeSection a {
+        margin-right: 0;
+        margin-left: auto;
+    }
+
+    .newInfo {
+        background-color: gainsboro;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        padding-left: 1em;
+        margin-top: 1em;
+        flex-wrap: wrap;
+    }
+
+    .newInfo input {
+        font-size: 20px;
+        height: 100%;
+        width: 20em;
+        margin-left: 1em;
+    }
+
+    #doneEdit {
+        background-color: darkgreen;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        border-radius:10px;
+        font-size: 25px;
+        margin-bottom: 1em;
+    }
+
+    .break {
+        flex-basis: 100%;
+        height: 0;
+    }
+
+</style>
+
+<body>
+    <div id="mainBody">
+        <%- include('./partials/sidebar.ejs') %>
+        <%- include('./partials/header.ejs') %>
+        <div id="taskBody">
+            <section>
+                <div class="taskHistoryHeader">
+                    <h1><%= task.title %></h1>
+                    <p class="dateTimeHeader">Created at: <%= task.createdate %></p>
+                </div>
+                <p>Created by: <%= task.createdby %></p>
+            </section>
+        </div>
+        <div class="newInfo">
+            <h1>Task Name:</h1>
+            <input id="newTaskName" />
+            <div class="break"></div>
+            <h1>Description:</h1>
+            <input id="newTaskDesc" />
+            <div class="break"></div>
+            <button onclick="sendEdit()" id="doneEdit">
+                Edit
+            </button>
+        </div>
+    </div>
+</body>
+
+<script>
+    async function sendEdit() {
+        const newTitle = document.getElementById("newTaskName");
+        const newDescription = document.getElementById("newTaskDesc");
+
+        const sendData = { "title": newTitle.value, "description": newDescription.value, "taskid": "<%=task._id%>" }
+        const fetchSend = await fetch('/tasks/api/editTask/', {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sendData)
+        });
+
+        const fetchJSON = await fetchSend.json();
+
+        if (fetchJSON.success) {
+            alert("Successfully altered existing task");
+            window.location.replace("/")
+
+        }
+        else {
+            alert(`Couldn't complete action: ${fetchJSON.message}`);
+        }
+
+    };
+</script>
+
+

@@ -40,6 +40,7 @@ div .taskHeader button {
     text-decoration: none;
     display: inline-block;
     font-size: 25px;
+    margin-right: 1em;
 }
 
 div .taskList:hover {

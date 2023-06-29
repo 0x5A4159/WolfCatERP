@@ -8,7 +8,8 @@ const taskSchema = new Schema({
     complete: { type: Boolean, required: true },
     createdate: { type: Date, required: true },
     createdby: { type: String, required: true },
-    onlyCreator: {type: Boolean, required:true}
+    onlyCreator: { type: Boolean, required: true },
+    lastEdited: {type: String, required: true}
 }, {versionKey: false});
 
 const Task = mongoose.model('Task', taskSchema);

@@ -13,12 +13,20 @@
 
     .checkboxConfirm {
         display:flex;
-        margin-top: 1em;
         align-items: center;
     }
 
     .checkboxConfirm input {
         max-width: 1em;
+    }
+
+    .formComplete {
+        display:flex;
+        align-items:center;
+    }
+
+    #onlyCreator {
+        width: 1em;
     }
 
 </style>
@@ -35,11 +43,13 @@
                 <input type="text" id="taskAdd" name="taskAdd" required /><br />
                 <label for="taskAddDesc">Description:</label><br />
                 <input type="text" id="taskDesc" name="taskAddDesc" /><br />
-                <button id="addTaskBtn">Add</button>
-                <div class="checkboxConfirm">
-                    <label for="onlyCreator" id="creatorCheckbox">Complete only by me</label>
-                    <input type="checkbox" id="onlyCreator" name="onlyCreator" />
-                </div>
+                <div class="formComplete">
+                    <button id="addTaskBtn">Add</button>
+                    <div class="checkboxConfirm">
+                        <label for="onlyCreator" id="creatorCheckbox">Complete only by me</label>
+                        <input type="checkbox" id="onlyCreator" name="onlyCreator" />
+                    </div>
+                 </div>
             </form>
         </div>
 

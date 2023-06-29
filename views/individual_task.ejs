@@ -38,6 +38,11 @@
 
     }
 
+    .completeSection a {
+        margin-right:0;
+        margin-left: auto;
+    }
+
 </style>
 
 <body>
@@ -65,7 +70,11 @@
                 <div class="completeSection">
                     <h1>Completed?</h1>
                     <img id="completeImg" src="https://www.shareicon.net/data/256x256/2016/10/20/846455_letter_512x512.png" />
+                    <a href="<%= task._id %>/edit"><p>Edit</p></a>
                 </div>
+                <% } %>
+                <% if (task.lastEdited !== "None") { %>
+                    <p>Last edited by: <%= task.lastEdited %></p>
                 <% } %>
             </section>
         </div>
