@@ -69,6 +69,16 @@
             margin-left: 1em;
         }
 
+        .userContactBox h5 {
+            margin-top: 0;
+            margin-bottom: 0;
+            padding-bottom: 0;
+            padding-top: 0;
+        }
+        .userContactBox #userAvatar {
+            width:100%;
+        }
+
     </style>
 </head>
 <body>
@@ -94,6 +104,10 @@
                     </div>
                 </div>
             </div>
+            <div class="userContactBox" style="padding-top:5px;padding-bottom:5px; display:flex; justify-content:center;">
+                <input type="file" name="userAvatar" id="userAvatar">
+                <button onclick="uploadAvatar()">Upload</button>
+            </div>
             <div class="userContactBox">
                 <h4>Pronouns</h4>
                 <p>Place/Holder</p>
@@ -104,3 +118,20 @@
     </div>
 </body>
 </html>
+
+<script>
+    async function uploadAvatar() {
+        let userPhoto = document.getElementById('userAvatar').files[0];
+        console.log(userPhoto);
+        let formData = new FormData();
+        formData.append("userPhoto", userPhoto);
+        const fetchSend = await fetch('/api/uploadAvatar', {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+    }
+</script>

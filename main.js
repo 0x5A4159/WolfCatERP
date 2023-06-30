@@ -133,9 +133,8 @@ app.get("/signup", (req, res) => {
 
 app.get("/users/:userid", (req, res) => {
     const userId = req.params.userid;
-    user.findOne({ 'userID': userId })
+    user.findOne({ 'userName': userId.toLowerCase() })
         .then((result) => {
-            //res.json({ userName: capitalizeWord(result.userName), userRole: USER_ROLES.get(result.userRole) });
             res.render('userIndividual', {
                 userName: capitalizeWord(result.userName),
                 userRole: USER_ROLES.get(result.userRole),

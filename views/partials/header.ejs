@@ -26,10 +26,11 @@
     <h1 id="headertext">Wolf Cat ERP</h1>
     
     <h3 class="headersignin">
-        <a class="headersignin"href="<%= typeof user !== 'undefined' ? 'users/' + user : '/signin'%>">
+        <a class="headersignin"href="<%= typeof user !== 'undefined' ? '/users/' + user : '/signin'%>">
             <%= typeof user !== 'undefined' ? user : "Sign-In" %>
         </a>
     </h3>
+
     <h4>
         <a href="javascript:signOut();">
             <%= typeof user !== 'undefined' ? "Sign-out" : "" %>
