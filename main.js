@@ -217,8 +217,18 @@ app.post('/tasks/api/editTask', async (req, res) => {
     // add user authentication
     createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then(async (sessionUserVal) => {
         if (req.body.title !== "") {
-            await task.updateOne({ _id: req.body.taskid }, { '$set': { 'title': req.body.title, 'description': req.body.description } });
-            res.status(200).json({ 'success': true, 'message': 'Updated existing task' });
+            await task.updateOne({ _id: req.body.taskid }
+                , {
+                    '$set': {
+                        'title': req.body.title,
+                        'description': req.body.description === "" ? "None" : req.body.description,
+                        'lastEdited': capitalizeWord(sessionUserVal.userName)
+                    }
+                });
+            res.status(200).json({
+                'success': true,
+                'message': 'Updated existing task'
+            });
         }
         else {
             res.status(404).json({ 'success': false, 'message': 'Task must have a name' });
