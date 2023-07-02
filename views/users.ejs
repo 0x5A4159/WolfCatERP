@@ -1,0 +1,52 @@
+<html>
+<head>
+    <link rel="stylesheet" href="index.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+
+        div #content_body {
+            display: flex;
+            margin-top: 1em;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        div #content_body h1 {
+            margin-bottom: 0px;
+            margin-top: 1em;
+        }
+
+        div #content_body p {
+            margin-right: 0;
+            margin-left:auto;
+        }
+
+        #userAvi {
+            width: 5em;
+            height: 5em;
+            margin: 1em;
+            margin-left: 0px;
+            border-radius: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="mainBody">
+        <%- include('./partials/sidebar.ejs') %>
+        <%- include('./partials/header.ejs') %>
+
+        <% result.forEach((e) => { %>
+        <div id="content_body">
+            <% if (e.userAvatar !== "") { %>
+                <img id="userAvi" src="data:image/png;base64, <%= e.userAvatar %>" />
+            <% } else { %>
+                <img id="userAvi" src="default.png" />
+            <%}%>
+            <a href="/users/<%=e.userName%>"><h2><%= e.userName %></h2></a>
+            <p>Member since: <%= e.userCreated %></p>
+        </div>
+        <%})%>
+    </div>
+</body>
+</html>

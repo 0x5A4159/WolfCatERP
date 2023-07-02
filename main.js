@@ -27,7 +27,6 @@ const USER_ROLES = new Map([ // mapping numeric roles to role-names
     [3, 'Trouble']
 ]);
 
-
 const server = https.createServer({
     key: key,
     cert: cert
@@ -41,7 +40,6 @@ mongoose.connect('mongodb://127.0.0.1:27017/appdb')
     })
     .catch((err) => console.log("Failed connect"));
 
-//app.use(bodyparser.urlencoded({ extended: false }));
 app.use(bodyparser.json());
 
 app.use(express.static('static'));
@@ -98,7 +96,7 @@ app.use((req, _, next) => {
 });
 
 
-// Basic website pages, login and home
+// Basic website pages, login and home =======================================================================================================
 app.get("/", (req, res) => {
     res.render('index', {user: capitalizeWord(req.cookies.USER)});
 });
@@ -129,7 +127,7 @@ app.get("/signup", (req, res) => {
     }
 });
 
-// users section
+// users section ==============================================================================================================================
 
 app.get("/users/:userid", (req, res) => {
     const userId = req.params.userid;
@@ -139,7 +137,8 @@ app.get("/users/:userid", (req, res) => {
                 userName: capitalizeWord(result.userName),
                 userRole: USER_ROLES.get(result.userRole),
                 userCreated: result.userCreated,
-                userAvatar: typeof result.userAvatar !== "undefined" & result.userAvatar !== "" ? result.userAvatar : default_avatar
+                userAvatar: typeof result.userAvatar !== "undefined" & result.userAvatar !== "" ? result.userAvatar : default_avatar,
+                userActual: result.userSession.sessionID === req.cookies.SID
             });
         })
         .catch((error) => {
@@ -147,7 +146,28 @@ app.get("/users/:userid", (req, res) => {
         });
 });
 
-// Tasks section
+app.get('/users', (req, res) => {
+    user.find({})
+        .then((result) => {
+            res.render('users', {result});
+        })
+})
+
+app.post('/api/uploadAvatar', async (req, res) => {
+    const imgAsBuffer = Buffer.from(req.body.userImage, 'base64');
+
+    if (imgAsBuffer.byteLength <= 128000) {
+        if (pngCheck(imgAsBuffer) || jpgCheck(imgAsBuffer)) {
+            await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userAvatar': imgAsBuffer.toString('base64') });
+            res.status(200).json({ "success": true });
+        }
+    }
+    else {
+        res.json({ "success": false, "message": "File Too Large!" });
+    }
+});
+
+// Tasks section ===============================================================================================================================
 
 app.get("/tasks", isAuth, (req, res) => {
     task.find({ complete: false })
@@ -239,6 +259,87 @@ app.post('/tasks/api/editTask', async (req, res) => {
     });
 });
 
+app.post('/tasks/api/delOne', (req, res) => {
+    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
+        res.status(400).json({ success: false, message: "Removing too fast" });
+    }
+    else {
+        try {
+            task.findById(req.body.popid).then(async (result) => {
+                if (result) {
+                    if (result.onlyCreator) {
+                        user.findOne({ userName: result.createdby.toLowerCase() }).then(async (userResult) => {
+                            if (userResult.userSession.sessionID === req.cookies.SID) {
+                                result.complete = true
+                                await result.save();
+                                res.status(200).json({ success: true });
+                            }
+                            else {
+                                res.status(403).json({ success: false, message: "Not the creator of this task" });
+                            }
+                        }).catch((err) => { res.status(500).json({ success: false }) });
+                    }
+                    else {
+                        result.complete = true
+                        await result.save()
+                        res.status(200).json({ success: true });
+                    }
+                }
+                else {
+                    res.status(403).json({ success: false });
+                }
+            })
+                .catch((error) => {
+                    console.log(error);
+                })
+        }
+        catch {
+            res.status(500).json({ success: false });
+        }
+    }
+});
+
+app.post('/tasks/api/addOne', (req, res) => {
+    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
+        res.status(400).json({ success: false });
+    }
+    else {
+        const userTitle = req.body.title;
+        let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
+
+        try {
+            successcreatedate = Date.now()
+            createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then((sessionUserVal) => {
+                task.create({ // create the task under the name of whoever matches the session id in their cookies
+                    title: userTitle,
+                    description: userDesc.length === 0 ? "No description" : userDesc,
+                    complete: false,
+                    createdate: successcreatedate,
+                    createdby: capitalizeWord(sessionUserVal.userName),
+                    onlyCreator: req.body.onlyCreator,
+                    lastEdited: "None"
+                }).then((result) => {
+                    res.status(200).send({
+                        "success": true,
+                        "id": result._id,
+                        "createdate": successcreatedate,
+                        "createdby": capitalizeWord(sessionUserVal.userName)
+                    });
+                });
+            }).catch((err) => {
+                console.log(err);
+                res.status(500).send({ "success": false, "message": "Couldn't create task." });
+            });
+
+        }
+        catch (err) {
+            console.log(err);
+            res.status(500).send({ "success": false, "id": "0" });
+        }
+    }
+});
+
+// ETC
 
 app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a RustLang binary TCP websocket
     let tcpClient = new net.Socket();
@@ -398,86 +499,6 @@ app.post("/signin", async (req, res) => {
     })
 })
 
-app.post('/tasks/api/delOne', (req, res) => {
-    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
-        res.status(400).json({ success: false, message: "Removing too fast"});
-    }
-    else {
-        try {
-            task.findById(req.body.popid).then(async (result) => {
-                if (result) {
-                    if (result.onlyCreator) {
-                        user.findOne({ userName: result.createdby.toLowerCase() }).then(async (userResult) => {
-                            if (userResult.userSession.sessionID === req.cookies.SID) {
-                                result.complete = true
-                                await result.save();
-                                res.status(200).json({ success: true });
-                            }
-                            else {
-                                res.status(403).json({ success: false, message: "Not the creator of this task"});
-                            }
-                        }).catch((err) => { res.status(500).json({ success: false }) });
-                    }
-                    else {
-                        result.complete = true
-                        await result.save()
-                        res.status(200).json({ success: true });
-                    }
-                }
-                else {
-                    res.status(403).json({ success: false });
-                }
-            })
-                .catch((error) => {
-                    console.log(error);
-                })
-        }
-        catch {
-            res.status(500).json({ success: false });
-        }
-    }
-});
-
-app.post('/tasks/api/addOne', (req, res) => {
-    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
-        res.status(400).json({ success: false });
-    }
-    else {
-        const userTitle = req.body.title;
-        let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
-
-        try {
-            successcreatedate = Date.now()
-            createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then((sessionUserVal) => {
-                task.create({ // create the task under the name of whoever matches the session id in their cookies
-                    title: userTitle,
-                    description: userDesc.length === 0 ? "No description" : userDesc,
-                    complete: false,
-                    createdate: successcreatedate,
-                    createdby: capitalizeWord(sessionUserVal.userName),
-                    onlyCreator: req.body.onlyCreator,
-                    lastEdited: "None"
-                }).then((result) => {
-                    res.status(200).send({
-                        "success": true,
-                        "id": result._id,
-                        "createdate": successcreatedate,
-                        "createdby": capitalizeWord(sessionUserVal.userName)
-                    });
-                });
-            }).catch((err) => {
-                console.log(err);
-                res.status(500).send({ "success": false, "message": "Couldn't create task." });
-            });
-
-        }
-        catch (err) {
-            console.log(err);
-            res.status(500).send({ "success": false, "id": "0" });
-        }
-    }
-});
-
 app.use((req, res) => {
     res.status(404).render('404');
 });
@@ -512,3 +533,30 @@ function capitalizeWord(string) {
 setInterval(() => {
     userStat = {};
 }, 15_000);
+
+
+// Image processing
+
+const pngCheck = (buffer) => {
+    if (!buffer || buffer.length < 8) {
+        return false; // cant be a png if it's too short to include png tag
+    }
+    else { // checks for the png tag at the first 8 bytes of image, and pushes it to a buffer so it can be compared withe image buffer
+        return buffer.slice(0, 8).toString() === Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).slice(0, 8).toString();
+    }
+}
+
+const jpgCheck = (buffer) => {
+    if (!buffer || buffer.length < 4) {
+        return false;
+    }
+    else {
+        const soi = buffer.slice(0, 2); // jpg starts with 2 specific bytes
+        const eoi = buffer.slice(-2); // and ends with 2 other specific bytes
+        const byteresults = [
+            soi.toString() === Buffer.from([0xff, 0xd8]).toString(),
+            eoi.toString() === Buffer.from([0xff, 0xd9]).toString()
+        ];
+        return byteresults.every(Boolean); // if both conditions match return true else false
+    }
+}
