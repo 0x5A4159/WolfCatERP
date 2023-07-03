@@ -40,7 +40,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/appdb')
     })
     .catch((err) => console.log("Failed connect"));
 
-app.use(bodyparser.json());
+app.use(express.json({limit:'10mb'}))
 
 app.use(express.static('static'));
 
@@ -154,9 +154,10 @@ app.get('/users', (req, res) => {
 })
 
 app.post('/api/uploadAvatar', async (req, res) => {
+
     const imgAsBuffer = Buffer.from(req.body.userImage, 'base64');
 
-    if (imgAsBuffer.byteLength <= 128000) {
+    if (imgAsBuffer.byteLength <= 300000) {
         if (pngCheck(imgAsBuffer) || jpgCheck(imgAsBuffer)) {
             await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userAvatar': imgAsBuffer.toString('base64') });
             res.status(200).json({ "success": true });

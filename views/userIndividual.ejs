@@ -9,8 +9,8 @@
         }
 
         .userBox {
-            display:flex;
-            background-color:gainsboro;
+            display: flex;
+            background-color: gainsboro;
             border-radius: 10px;
             margin-top: 1em;
             margin-left: 1em;
@@ -18,67 +18,67 @@
             align-items: center;
         }
 
-        .userBox #userRole {
-            margin-right: 1em;
-            margin-left: auto;
-        }
+            .userBox #userRole {
+                margin-right: 1em;
+                margin-left: auto;
+            }
 
         #userAvi {
             height: 20em;
             width: 20em;
-            margin-top:1em;
-            border-radius:10px;
+            margin-top: 1em;
+            border-radius: 10px;
         }
 
         .userContainer {
-            display:flex;
+            display: flex;
             align-items: flex-start;
         }
 
         .userInfo {
             display: flex;
-            padding-right:0px;
+            padding-right: 0px;
             flex-direction: column;
             width: 100%;
         }
 
         .userAboutBox {
-            background-color:gainsboro;
+            background-color: gainsboro;
             margin-top: 1em;
             margin-left: 1em;
-            border-radius:10px;
-            padding-left:1em;
+            border-radius: 10px;
+            padding-left: 1em;
         }
 
         .userContactBox {
-            background-color:gainsboro;
-            max-width:18em;
+            background-color: gainsboro;
+            max-width: 18em;
             padding: 1em;
             padding-top: 1px;
             border-radius: 10px;
             margin-top: 1em;
         }
 
-        .userContactBox h4 {
-            margin-bottom: 0;
-        }
+            .userContactBox h4 {
+                margin-bottom: 0;
+            }
 
-        .userContactBox p {
-            margin-top: 0;
-            margin-bottom: 0;
-            margin-left: 1em;
-        }
+            .userContactBox p {
+                margin-top: 0;
+                margin-bottom: 0;
+                margin-left: 1em;
+            }
 
-        .userContactBox h5 {
-            margin-top: 0;
-            margin-bottom: 0;
-            padding-bottom: 0;
-            padding-top: 0;
-        }
-        .userContactBox #userAvatar {
-            width:100%;
-        }
+            .userContactBox h5 {
+                margin-top: 0;
+                margin-bottom: 0;
+                padding-bottom: 0;
+                padding-top: 0;
+            }
 
+            .userContactBox #userAvatar {
+                width: 100%;
+            }
     </style>
 </head>
 <body>
@@ -120,46 +120,49 @@
     </div>
 </body>
 </html>
-
+<% if (userActual) { %>
 <script>
     async function uploadAvatar() {
         let userPhoto = document.getElementById('userAvatar').files[0];
-        if (userPhoto.size <= 128000) {
             if (userPhoto.type === "image/png" || userPhoto.type === "image/jpeg") {
                 var reader = new FileReader();
-                reader.onload = async () => {
-                    var stringB64 = reader.result.substring(reader.result.indexOf(',') + 1);
-                    const fetchSend = await fetch('/api/uploadAvatar', {
-                        method: "POST",
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ "userImage" : stringB64 })
-                    });
+                reader.onload = async (event) => {
+                    let img_url = event.target.result;
+                    let image = document.createElement('img');
+                    image.src = img_url;
+                    image.onload = async () => {
+                        let canvas = document.createElement('canvas');
+                        canvas.width, canvas.height = 200;
+                        const context = canvas.getContext('2d');
+                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        const dataURL = context.canvas.toDataURL();
+                        const stringB64 = dataURL.substring(dataURL.indexOf(',') + 1);
+                        const fetchSend = await fetch('/api/uploadAvatar', {
+                            method: "POST",
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ "userImage": stringB64 })
+                        });
 
-                    const fetchJSON = await fetchSend.json();
+                        const fetchJSON = await fetchSend.json();
 
-                    console.log(fetchJSON);
-
-                    if (fetchJSON.success) {
-                        alert("Updated!");
-                        window.location.reload();
-                    }
-                    else {
-                        alert(`Couldn't update: ${fetchJSON.message}`);
+                        if (fetchJSON.success) {
+                            alert("Updated!");
+                            window.location.reload();
+                        }
+                        else {
+                            alert(`Couldn't update: ${fetchJSON.message}`);
+                        }
                     }
                 }
                 reader.readAsDataURL(userPhoto);
 
-
             } else {
                 alert('File must be a PNG or JPG')
             }
-        }
-        else {
-            alert('File too large (128kb max)');
-        }
     }
 
 </script>
+<%}%>
