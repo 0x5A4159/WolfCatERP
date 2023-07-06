@@ -170,29 +170,39 @@ app.post('/api/uploadAvatar', async (req, res) => {
     }
 });
 
-app.post('/api/changePronoun', async (req, res ) => {
-    if (req.body.userPronoun.length < 12) {
-        if (req.body.userPronoun.includes("/")) {
-            await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userPronouns': req.body.userPronoun });
-            res.status(200).json({ "success": true });
+app.post('/api/changePronoun', async (req, res) => {
+    if (req.body.userPronoun !== null) {
+        if (req.body.userPronoun.length < 12) {
+            if (req.body.userPronoun.includes("/")) {
+                await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userPronouns': req.body.userPronoun });
+                res.status(200).json({ "success": true });
+            }
+            else {
+                res.status(400).json({ "succes": false, "message": "Pronouns missing a slash" })
+            }
+
         }
         else {
-            res.status(400).json({"succes": false, "message": "Pronouns missing a slash"})
+            res.status(400).json({ "success": false, "message": "Pronouns too long" });
         }
-        
     }
     else {
-        res.status(400).json({ "success": false, "message": "Pronouns too long" });
+        res.status(400).json({ "success": false, "message": "Missing pronouns" });
     }
 });
 
 app.post('/api/changeStatus', async (req, res) => {
-    if (req.body.userStatus.length < 70) { // 70 characters is about how much it takes to wrap twice at 1920x1080
-        await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userStatus': req.body.userStatus });
-        res.status(200).json({ 'success': true });
+    if (req.body.userPronoun !== null) {
+        if (req.body.userStatus.length < 70) { // 70 characters is about how much it takes to wrap twice at 1920x1080
+            await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userStatus': req.body.userStatus });
+            res.status(200).json({ 'success': true });
+        }
+        else {
+            res.status(400).json({ 'success': false, 'message': 'Status too long, 70 characters max.' });
+        }
     }
     else {
-        res.status(400).json({ 'success': false, 'message': 'Status too long, 70 characters max.' });
+        res.status(400).json({ "success": false, "message": "Missing status information." });
     }
 });
 
