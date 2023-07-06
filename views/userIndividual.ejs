@@ -59,10 +59,6 @@
             margin-top: 1em;
         }
 
-            .userContactBox h4 {
-                margin-bottom: 0;
-            }
-
             .userContactBox p {
                 margin-top: 0;
                 margin-bottom: 0;
@@ -78,6 +74,15 @@
 
             .userContactBox #userAvatar {
                 width: 100%;
+            }
+
+            .userContactBox span {
+                display:flex;
+                align-items:center;
+            }
+
+            .userContactBox span a {
+                margin-left:auto;
             }
     </style>
 </head>
@@ -111,10 +116,21 @@
             </div>
             <% } %>
             <div class="userContactBox">
-                <h4>Pronouns</h4>
-                <p>Place/Holder</p>
-                <h4>Status</h4>
-                <p>PlaceHolder</p>
+                <span>
+                    <h4>Pronouns</h4>
+                    <% if (userActual) { %>
+                    <a onclick="changePronoun()">Edit</a>
+                    <%}%>
+                </span>
+                <p><%= userPronouns %></p>
+                
+                <span>
+                    <h4>Status</h4>
+                    <% if (userActual) { %>
+                    <a onclick="changeStatus()">Edit</a>
+                    <%}%>
+                </span>
+                <p><%= userStatus %></p>
             </div>
         </div>
     </div>
@@ -162,6 +178,59 @@
             } else {
                 alert('File must be a PNG or JPG')
             }
+    }
+
+    async function changePronoun() {
+        var userInput = prompt('Enter new pronouns', 'They/Them')
+        if (userInput !== "") {
+            const fetchSend = await fetch('/api/changePronoun', {
+                method: "POST",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ "userPronoun": userInput })
+            });
+            const fetchJSON = await fetchSend.json();
+            if (fetchJSON.success) {
+                alert("Updated pronouns!");
+                window.location.reload();
+            }
+            else {
+                alert(`Error: ${fetchJSON.message}`);
+            }
+        }
+        else {
+            alert("Need to enter some sort of input")
+        }
+    }
+
+    async function changeStatus() {
+        var userInput = prompt('Enter a new status', 'Feeling lucky')
+        if (userInput.length > 70) {
+            userInput = userInput.substring(0, 71);
+        }
+        if (userInput !== "") {
+            const fetchSend = await fetch('/api/changeStatus', {
+                method: "POST",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ "userStatus": userInput })
+            });
+            const fetchJSON = await fetchSend.json();
+            if (fetchJSON.success) {
+                alert("Updated status!");
+                window.location.reload();
+            }
+            else {
+                alert(`Error: ${fetchJSON.message}`);
+            }
+        }
+        else {
+            alert("Need to enter some sort of input")
+        }
     }
 
 </script>

@@ -138,6 +138,8 @@ app.get("/users/:userid", (req, res) => {
                 userRole: USER_ROLES.get(result.userRole),
                 userCreated: result.userCreated,
                 userAvatar: typeof result.userAvatar !== "undefined" & result.userAvatar !== "" ? result.userAvatar : default_avatar,
+                userStatus: typeof result.userStatus !== 'undefined' & result.userStatus !== "" ? result.userStatus : "Feeling Lucky",
+                userPronouns: typeof result.userStatus !== 'undefined' & result.userPronouns !== "" ? result.userPronouns : "Place/Holder",
                 userActual: result.userSession.sessionID === req.cookies.SID
             });
         })
@@ -165,6 +167,32 @@ app.post('/api/uploadAvatar', async (req, res) => {
     }
     else {
         res.json({ "success": false, "message": "File Too Large!" });
+    }
+});
+
+app.post('/api/changePronoun', async (req, res ) => {
+    if (req.body.userPronoun.length < 12) {
+        if (req.body.userPronoun.includes("/")) {
+            await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userPronouns': req.body.userPronoun });
+            res.status(200).json({ "success": true });
+        }
+        else {
+            res.status(400).json({"succes": false, "message": "Pronouns missing a slash"})
+        }
+        
+    }
+    else {
+        res.status(400).json({ "success": false, "message": "Pronouns too long" });
+    }
+});
+
+app.post('/api/changeStatus', async (req, res) => {
+    if (req.body.userStatus.length < 70) { // 70 characters is about how much it takes to wrap twice at 1920x1080
+        await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userStatus': req.body.userStatus });
+        res.status(200).json({ 'success': true });
+    }
+    else {
+        res.status(400).json({ 'success': false, 'message': 'Status too long, 70 characters max.' });
     }
 });
 

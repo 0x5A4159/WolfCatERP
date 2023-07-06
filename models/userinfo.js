@@ -9,7 +9,9 @@ const userSchema = new Schema({
     userEmail: { type: String, required: true },
     userSession: { type: Object, required: false },
     userCreated: { type: Date, required: true },
-    userAvatar: {type: String, required: false}
+    userAvatar: { type: String, required: false },
+    userPronouns: { type: String, required: false },
+    userStatus: {type: String, required:false}
 }, { versionKey: false });
 
 const User = mongoose.model('User', userSchema);
