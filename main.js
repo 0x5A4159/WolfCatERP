@@ -140,7 +140,7 @@ app.get("/users/:userid", (req, res) => {
                 userAvatar: typeof result.userAvatar !== "undefined" & result.userAvatar !== "" ? result.userAvatar : default_avatar,
                 userStatus: typeof result.userStatus !== 'undefined' & result.userStatus !== "" ? result.userStatus : "Feeling Lucky",
                 userPronouns: typeof result.userStatus !== 'undefined' & result.userPronouns !== "" ? result.userPronouns : "Place/Holder",
-                userActual: result.userSession.sessionID === req.cookies.SID
+                userActual: result.userSession.sessionID === req.cookies.SID // comparing if the user viewing the page matches the user being viewed
             });
         })
         .catch((error) => {
@@ -156,18 +156,23 @@ app.get('/users', (req, res) => {
 })
 
 app.post('/api/uploadAvatar', async (req, res) => {
-
-    const imgAsBuffer = Buffer.from(req.body.userImage, 'base64');
-
-    if (imgAsBuffer.byteLength <= 300000) {
-        if (pngCheck(imgAsBuffer) || jpgCheck(imgAsBuffer)) {
-            await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userAvatar': imgAsBuffer.toString('base64') });
-            res.status(200).json({ "success": true });
+    try { // if receiving a malformed b64 object
+        const imgAsBuffer = Buffer.from(req.body.userImage, 'base64');
+        if (imgAsBuffer.byteLength <= 300000) { // no 256x256 image should be this large
+            if (pngCheck(imgAsBuffer) || jpgCheck(imgAsBuffer)) {
+                await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userAvatar': imgAsBuffer.toString('base64') });
+                res.status(200).json({ "success": true });
+            }
+        }
+        else {
+            res.json({ "success": false, "message": "File Too Large!" });
         }
     }
-    else {
-        res.json({ "success": false, "message": "File Too Large!" });
+    catch (error) {
+        console.log(`${req.socket.remoteAddress} Made bad API request: ${error}`);
+        res.status(500).json({"success": false, "message": "Didn't receive proper values."})
     }
+
 });
 
 app.post('/api/changePronoun', async (req, res) => {
@@ -177,16 +182,15 @@ app.post('/api/changePronoun', async (req, res) => {
                 await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userPronouns': req.body.userPronoun });
                 res.status(200).json({ "success": true });
             }
-            else {
-                res.status(400).json({ "succes": false, "message": "Pronouns missing a slash" })
+            else {  // no slash in pronouns
+                res.status(400).json({ "success": false, "message": "Pronouns missing a slash" })
             }
-
         }
-        else {
+        else {  // pronouns exceed 12 char
             res.status(400).json({ "success": false, "message": "Pronouns too long" });
         }
     }
-    else {
+    else { // pronouns empty
         res.status(400).json({ "success": false, "message": "Missing pronouns" });
     }
 });
@@ -197,11 +201,11 @@ app.post('/api/changeStatus', async (req, res) => {
             await user.updateOne({ 'userSession.sessionID': req.cookies.SID }, { 'userStatus': req.body.userStatus });
             res.status(200).json({ 'success': true });
         }
-        else {
+        else { // too long
             res.status(400).json({ 'success': false, 'message': 'Status too long, 70 characters max.' });
         }
     }
-    else {
+    else { // no info at all
         res.status(400).json({ "success": false, "message": "Missing status information." });
     }
 });
