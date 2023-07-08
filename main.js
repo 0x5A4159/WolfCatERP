@@ -580,7 +580,7 @@ setInterval(() => {
 
 // Image processing
 
-const pngCheck = (buffer) => {
+const pngCheck = (buffer) => { // png starts with 8 byte tag.
     if (!buffer || buffer.length < 8) {
         return false; // cant be a png if it's too short to include png tag
     }
@@ -589,7 +589,7 @@ const pngCheck = (buffer) => {
     }
 }
 
-const jpgCheck = (buffer) => {
+const jpgCheck = (buffer) => { // checking jpg matches two start and end bytes for jpg raw byte configuration
     if (!buffer || buffer.length < 4) {
         return false;
     }

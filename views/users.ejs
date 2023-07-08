@@ -43,7 +43,7 @@
             <% } else { %>
                 <img id="userAvi" src="default.png" />
             <%}%>
-            <a href="/users/<%=e.userName%>"><h2><%= e.userName %></h2></a>
+            <a href="/users/<%=e.userName%>"><h2><%= e.userName[0].toUpperCase() + e.userName.slice(1) %></h2></a>
             <p>Member since: <%= e.userCreated %></p>
         </div>
         <%})%>
