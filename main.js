@@ -603,3 +603,25 @@ const jpgCheck = (buffer) => { // checking jpg matches two start and end bytes f
         return byteresults.every(Boolean); // if both conditions match return true else false
     }
 }
+
+// Should it be necessary, a binary search alg
+
+const binSearch = (arr, val) => {
+    let low = 0;
+    let high = arr.length - 1;
+
+    while (low <= high) {
+        let mid = Math.floor((low + high) / 2);
+
+        if (arr[mid] === val) {
+            return mid;
+        }
+
+        if (val < arr[mid]) {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return -1; // default case
+}
