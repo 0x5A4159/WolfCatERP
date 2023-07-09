@@ -404,7 +404,7 @@ const isAdmin = async (request) => {
     isLocalHost = request.socket.remoteAddress === process.env.SERVERIPADDR;
     const creatorFind = await user.findOne({ 'userSession.sessionID': request.cookies.SID });
     try {
-        isCreator = (creatorFind).userName === 'admin';
+        isCreator = (creatorFind).userRole === 0;
     }
     catch {
         return false;
@@ -526,18 +526,23 @@ app.post("/signup", async (req, res) => {
 
 app.post("/signin", async (req, res) => {
     await user.findOne({ "userName": req.body.userName.toLowerCase() }).then(async (userObj) => {
-        const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
-        if (passMatch) {
-            const secretToken = genRandKey(128);
-            const expireDateCalc = new Date(Date.now() + ONE_MONTH);
-            res.cookie('SID', secretToken, { expires: expireDateCalc });
-            res.cookie('USER', req.body.userName, { expires: expireDateCalc });
-            userObj.userSession = { sessionID: secretToken, expireDate: expireDateCalc };
-            userObj.save();
-            res.status(200).send({ "success": true, "message": "Successfully signed in." });
+        if (userObj !== null) {
+            const passMatch = await bcrypt.compare(req.body.userPass, userObj.userPass);
+            if (passMatch) {
+                const secretToken = genRandKey(128);
+                const expireDateCalc = new Date(Date.now() + ONE_MONTH);
+                res.cookie('SID', secretToken, { expires: expireDateCalc });
+                res.cookie('USER', req.body.userName, { expires: expireDateCalc });
+                userObj.userSession = { sessionID: secretToken, expireDate: expireDateCalc };
+                userObj.save();
+                res.status(200).send({ "success": true, "message": "Successfully signed in." });
+            }
+            else {
+                res.status(404).send({ "success": false, "message": "Incorrect sign-in info." });
+            }
         }
         else {
-            res.status(404).send({ "success": false, "message": "Incorrect sign-in info." });
+            res.status(404).send({ 'success': false, 'message': "Incorrect sign-in info." });
         }
     })
 })
