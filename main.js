@@ -95,10 +95,9 @@ app.use((req, _, next) => {
     next();
 });
 
-
 // Basic website pages, login and home =======================================================================================================
 app.get("/", (req, res) => {
-    res.render('index', {user: capitalizeWord(req.cookies.USER)});
+    res.render('index', { user: capitalizeWord(req.cookies.USER) });
 });
 
 app.get("/home", (_, res) => {
@@ -288,6 +287,9 @@ app.post('/tasks/api/editTask', async (req, res) => {
                         'lastEdited': capitalizeWord(sessionUserVal.userName)
                     }
                 });
+
+            addLog(`User ${capitalizeWord(sessionUserVal.userName)} edited task.`);
+
             res.status(200).json({
                 'success': true,
                 'message': 'Updated existing task'
@@ -629,4 +631,13 @@ const binSearch = (arr, val) => {
         }
     }
     return -1; // default case
+}
+
+const addLog = (msg) => { // getmonth returns a 0 indexed value for SOME reason
+    dateval = new Date();
+    formatdate = `${dateval.getMonth() + 1}/${dateval.getDate()}/${dateval.getFullYear()} @ ${dateval.getHours()}:${dateval.getMinutes()}:${dateval.getSeconds()}`;
+    dated_msg = `${formatdate} - ${msg}\n`;
+    fs.appendFile('data.log', dated_msg, (err) => {
+        if (err) throw err;
+    });
 }
