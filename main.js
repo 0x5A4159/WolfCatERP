@@ -24,7 +24,7 @@ const USER_ROLES = new Map([ // mapping numeric roles to role-names
     [0, 'Admin'],
     [1, 'Moderator'],
     [2, 'User'],
-    [3, 'Trouble']
+    [3, 'Disabled']
 ]);
 
 const server = https.createServer({
@@ -580,7 +580,7 @@ function capitalizeWord(string) {
 
 setInterval(() => {
     userStat = {};
-}, 15_000);
+}, 30_000);
 
 
 // Image processing
