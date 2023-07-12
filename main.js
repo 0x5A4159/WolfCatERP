@@ -471,8 +471,22 @@ app.post("/admin/funcs", async (req, res) => {
                 }
                 break;
 
+            case 'cycleLog':
+                retvalue = await cycleLog();
+                if (typeof retvalue !== 'undefined') {
+                    res.json({ "success": true, "message": `${retvalue}` });
+                }
+                else {
+                    res.json({"success": false, "message": `Issue cycling log, value for return is ${retvalue}`})
+                }
+
             default:
-                res.json({ 'success': false, 'message': 'no known command' });
+                if (!res.headersSent) {
+                    res.json({ 'success': false, 'message': 'no known command' });
+                }
+                else {
+
+                }
         }
     }
     else {
@@ -640,4 +654,18 @@ const addLog = (msg) => { // getmonth returns a 0 indexed value for SOME reason
     fs.appendFile('data.log', dated_msg, (err) => {
         if (err) throw err;
     });
+}
+
+const cycleLog = () => {
+    dateval = new Date()
+    formatdate = `${dateval.getMonth() + 1}-${dateval.getDate()}-${dateval.getFullYear()}-${dateval.getHours()}-${dateval.getMinutes()}`;
+    if (fs.existsSync('./data.log')) {
+        fs.renameSync('./data.log', `./log_archive/data-${formatdate}.log`);
+        fs.writeFileSync('./data.log', '');
+        return `Copied data.log for ${formatdate}`;
+    }
+    else {
+        fs.writeFileSync('./data.log', '');
+        return `Created data.log as it was missing, no data.log to cycle.`
+    }
 }
