@@ -434,11 +434,12 @@ app.get("/admin/funcs", async (req, res) => {
 
 app.post("/admin/funcs", async (req, res) => {
     if (await isAdmin(req)) {
+        const funcParam = req.body.funcParam;
         switch (req.body.funcName) {
             case 'delManyTasks':
-                if (req.body.funcParam !== '') {
+                if (funcParam !== '') {
                     try {
-                        jsonVal = JSON.parse(req.body.funcParam);
+                        jsonVal = JSON.parse(funcParam);
                         await task.deleteMany(jsonVal);
                         res.json({ "success": true, "message": "called func successfully" })
                     }
@@ -457,8 +458,8 @@ app.post("/admin/funcs", async (req, res) => {
                 break;
 
             case 'logoutUser':
-                if (req.body.funcParam !== '') {
-                    user.findOne({ userName: req.body.funcParam }).then((result) => {
+                if (funcParam !== '') {
+                    user.findOne({ userName: funcParam.toLowerCase() }).then((result) => {
                         result.userSession = {};
                         result.save();
                         res.json({ "success": true, "message": "logged out user successfully" });
@@ -478,6 +479,11 @@ app.post("/admin/funcs", async (req, res) => {
                 }
                 else {
                     res.json({"success": false, "message": `Issue cycling log, value for return is ${retvalue}`})
+                }
+
+            case 'AutoCycle':
+                if (funcParam.toLowerCase() === 'on') {
+                    fs.
                 }
 
             default:
@@ -667,5 +673,20 @@ const cycleLog = () => {
     else {
         fs.writeFileSync('./data.log', '');
         return `Created data.log as it was missing, no data.log to cycle.`
+    }
+}
+
+const getSettings = (callReason) => {
+    addLog(`Called getSettings for reason: ${callReason}.`);
+    if (fs.existsSync('./settings.cfg')) {
+        settings_file = fs.readFileSync('./settings.cfg', 'utf-8').replace('\r', '');
+        var jsonData = {};
+        const split_values = settings_file.split('\n');
+        split_values.forEach((column) => {
+            split_internal = column.split(':');
+            jsonData[split_internal[0]] = split_internal[1];
+        });
+
+        return jsonData;
     }
 }
