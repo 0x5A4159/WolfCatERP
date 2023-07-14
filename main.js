@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const user = require('./models/userinfo');
 const task = require('./models/tasks');
-const bodyparser = require('body-parser');
 const net = require('net');
 const fs = require('fs');
 const https = require('https');
@@ -20,6 +19,7 @@ const key = fs.readFileSync('./rsa/localhost.key');
 const cert = fs.readFileSync('./rsa/localhost.crt');
 const default_avatar = fs.readFileSync('./useraviencode.txt');
 const ONE_MONTH = 1000 * 60 * 60 * 24 * 30;
+
 const USER_ROLES = new Map([ // mapping numeric roles to role-names
     [0, 'Admin'],
     [1, 'Moderator'],
@@ -36,9 +36,16 @@ const server = https.createServer({
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
     .then((result) => {
         console.log("DB connect on localhost:27017");
-        server.listen(serverport, serverip);
+        server.listen(serverport, serverip);    
     })
     .catch((err) => console.log("Failed connect"));
+
+
+// Cycling log to guarantee it exists when we call getSettings
+cycleLog("Initializing start-up log cycle.");
+
+var settings = {};
+dynamicSettings();
 
 app.use(express.json({limit:'10mb'}))
 
@@ -483,7 +490,7 @@ app.post("/admin/funcs", async (req, res) => {
 
             case 'AutoCycle':
                 if (funcParam.toLowerCase() === 'on') {
-                    fs.
+                    
                 }
 
             default:
@@ -604,7 +611,6 @@ setInterval(() => {
     userStat = {};
 }, 30_000);
 
-
 // Image processing
 
 const pngCheck = (buffer) => { // png starts with 8 byte tag.
@@ -653,7 +659,9 @@ const binSearch = (arr, val) => {
     return -1; // default case
 }
 
-const addLog = (msg) => { // getmonth returns a 0 indexed value for SOME reason
+// logging and settings
+
+function addLog (msg) { // getmonth returns a 0 indexed value for SOME reason
     dateval = new Date();
     formatdate = `${dateval.getMonth() + 1}/${dateval.getDate()}/${dateval.getFullYear()} @ ${dateval.getHours()}:${dateval.getMinutes()}:${dateval.getSeconds()}`;
     dated_msg = `${formatdate} - ${msg}\n`;
@@ -662,7 +670,7 @@ const addLog = (msg) => { // getmonth returns a 0 indexed value for SOME reason
     });
 }
 
-const cycleLog = () => {
+function cycleLog () {
     dateval = new Date()
     formatdate = `${dateval.getMonth() + 1}-${dateval.getDate()}-${dateval.getFullYear()}-${dateval.getHours()}-${dateval.getMinutes()}`;
     if (fs.existsSync('./data.log')) {
@@ -676,17 +684,36 @@ const cycleLog = () => {
     }
 }
 
-const getSettings = (callReason) => {
-    addLog(`Called getSettings for reason: ${callReason}.`);
-    if (fs.existsSync('./settings.cfg')) {
-        settings_file = fs.readFileSync('./settings.cfg', 'utf-8').replace('\r', '');
-        var jsonData = {};
-        const split_values = settings_file.split('\n');
-        split_values.forEach((column) => {
-            split_internal = column.split(':');
-            jsonData[split_internal[0]] = split_internal[1];
-        });
+    return new Promise((resolve) => {
 
-        return jsonData;
-    }
+    });
+
+function getSettings(callReason) {
+    return new Promise((resolve) => {
+        addLog(`Called getSettings for reason: ${callReason}.`);
+        if (fs.existsSync('./settings.cfg')) {
+            settings_file = fs.readFile('./settings.cfg', 'utf-8', (err, data) => {
+                if (err) {
+                    return;
+                }
+                else {
+                    var jsonData = {};
+                    const split_values = data.replace('\r', '').split('\n');
+                    split_values.forEach((column) => {
+                        split_internal = column.split(':');
+                        jsonData[split_internal[0]] = split_internal[1];
+                    });
+                    settings = jsonData;
+                    resolve();
+                }
+            });
+        }
+    });
 }
+
+async function dynamicSettings() {
+    await getSettings('Called by dynamicSetting auto-updater')
+    console.log('dynamicSettings called to auto-updated settings');
+    console.log(settings);
+    await setTimeout(dynamicSettings, 'cycleTime' in settings ? settings.cycleTime * 1000 : 60 * 60 * 60 * 1000);
+    };
