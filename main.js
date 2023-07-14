@@ -45,7 +45,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/appdb')
 cycleLog("Initializing start-up log cycle.");
 
 var settings = {};
-dynamicSettings();
+var recentTimer = dynamicSettings();
 
 app.use(express.json({limit:'10mb'}))
 
@@ -485,13 +485,29 @@ app.post("/admin/funcs", async (req, res) => {
                     res.json({ "success": true, "message": `${retvalue}` });
                 }
                 else {
-                    res.json({"success": false, "message": `Issue cycling log, value for return is ${retvalue}`})
+                    res.json({ "success": false, "message": `Issue cycling log, value for return is ${retvalue}` })
                 }
+                break;
 
             case 'AutoCycle':
                 if (funcParam.toLowerCase() === 'on') {
-                    
+
                 }
+                else if (funcParam.toLowerCase() === 'off') {
+
+                }
+                break;
+
+            case 'updateSettings':
+                clearTimeout(recentTimer);
+                recentTimer = await dynamicSettings();
+                if (typeof recentTimer !== 'undefined') {
+                    res.json({ 'success': true, "message": `Updated settings, now: ${settings}` });
+                }
+                else {
+                    res.json({ 'success': false, 'message': 'Couldnt update settings' });
+                }
+                break;
 
             default:
                 if (!res.headersSent) {
@@ -684,10 +700,6 @@ function cycleLog () {
     }
 }
 
-    return new Promise((resolve) => {
-
-    });
-
 function getSettings(callReason) {
     return new Promise((resolve) => {
         addLog(`Called getSettings for reason: ${callReason}.`);
@@ -713,7 +725,6 @@ function getSettings(callReason) {
 
 async function dynamicSettings() {
     await getSettings('Called by dynamicSetting auto-updater')
-    console.log('dynamicSettings called to auto-updated settings');
-    console.log(settings);
-    await setTimeout(dynamicSettings, 'cycleTime' in settings ? settings.cycleTime * 1000 : 60 * 60 * 60 * 1000);
+    const recentTimerID = await setTimeout(dynamicSettings, 'cycleTime' in settings ? settings.cycleTime * 1000 : 60 * 60 * 60 * 1000);
+    return recentTimerID;
     };
