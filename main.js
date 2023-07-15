@@ -431,95 +431,106 @@ app.get("/admin/stats", async (req, res) => {
 });
 
 app.get("/admin/funcs", async (req, res) => {
-    if (await isAdmin(req)) {
-        res.render('adminfuncs');
+    if (settings.funcPage) {
+        if (await isAdmin(req)) {
+            res.render('adminfuncs');
+        }
+        else {
+            res.json({ "success": false })
+        }
     }
     else {
-        res.json({"success": false})
+        res.json({"success": false, "message": "FuncPage disabled in settings."})
     }
 })
 
 app.post("/admin/funcs", async (req, res) => {
-    if (await isAdmin(req)) {
-        const funcParam = req.body.funcParam;
-        switch (req.body.funcName) {
-            case 'delManyTasks':
-                if (funcParam !== '') {
-                    try {
-                        jsonVal = JSON.parse(funcParam);
-                        await task.deleteMany(jsonVal);
-                        res.json({ "success": true, "message": "called func successfully" })
+    if (settings.funcPage) {
+        if (await isAdmin(req)) {
+            const funcParam = req.body.funcParam;
+            switch (req.body.funcName) {
+                case 'delManyTasks':
+                    if (funcParam !== '') {
+                        try {
+                            jsonVal = JSON.parse(funcParam);
+                            await task.deleteMany(jsonVal);
+                            res.json({ "success": true, "message": "called func successfully" })
+                        }
+                        catch {
+                            res.json({ "success": false, "message": "Bad formatting on parameters" })
+                        }
+
                     }
-                    catch {
-                        res.json({"success": false, "message": "Bad formatting on parameters"})
+                    else {
+                        res.json({ "success": false, "message": "parameters were empty." });
                     }
-                    
-                }
-                else {
-                    res.json({ "success": false, "message": "parameters were empty." });
-                }
-                break;
+                    break;
 
-            case 'completeAll':
-                await task.updateMany({}, { '$set': { 'complete': true } });
-                break;
+                case 'completeAll':
+                    await task.updateMany({}, { '$set': { 'complete': true } });
+                    break;
 
-            case 'logoutUser':
-                if (funcParam !== '') {
-                    user.findOne({ userName: funcParam.toLowerCase() }).then((result) => {
-                        result.userSession = {};
-                        result.save();
-                        res.json({ "success": true, "message": "logged out user successfully" });
-                    }).catch((err) => {
-                        res.json({ "success": false, "message": "couldn't find user" });
-                    })
-                }
-                else {
-                    res.json({ "success": false, "message": "Need to provide a parameter" })
-                }
-                break;
+                case 'logoutUser':
+                    if (funcParam !== '') {
+                        user.findOne({ userName: funcParam.toLowerCase() }).then((result) => {
+                            result.userSession = {};
+                            result.save();
+                            res.json({ "success": true, "message": "logged out user successfully" });
+                        }).catch((err) => {
+                            res.json({ "success": false, "message": "couldn't find user" });
+                        })
+                    }
+                    else {
+                        res.json({ "success": false, "message": "Need to provide a parameter" })
+                    }
+                    break;
 
-            case 'cycleLog':
-                retvalue = await cycleLog();
-                if (typeof retvalue !== 'undefined') {
-                    res.json({ "success": true, "message": `${retvalue}` });
-                }
-                else {
-                    res.json({ "success": false, "message": `Issue cycling log, value for return is ${retvalue}` })
-                }
-                break;
+                case 'cycleLog':
+                    retvalue = await cycleLog();
+                    if (typeof retvalue !== 'undefined') {
+                        res.json({ "success": true, "message": `${retvalue}` });
+                    }
+                    else {
+                        res.json({ "success": false, "message": `Issue cycling log, value for return is ${retvalue}` })
+                    }
+                    break;
 
-            case 'AutoCycle':
-                if (funcParam.toLowerCase() === 'on') {
+                case 'AutoCycle':
+                    if (funcParam.toLowerCase() === 'on') {
 
-                }
-                else if (funcParam.toLowerCase() === 'off') {
+                    }
+                    else if (funcParam.toLowerCase() === 'off') {
 
-                }
-                break;
+                    }
+                    break;
 
-            case 'updateSettings':
-                clearTimeout(recentTimer);
-                recentTimer = await dynamicSettings();
-                if (typeof recentTimer !== 'undefined') {
-                    res.json({ 'success': true, "message": `Updated settings, now: ${settings}` });
-                }
-                else {
-                    res.json({ 'success': false, 'message': 'Couldnt update settings' });
-                }
-                break;
+                case 'updateSettings':
+                    clearTimeout(recentTimer);
+                    recentTimer = await dynamicSettings();
+                    if (typeof recentTimer !== 'undefined') {
+                        res.json({ 'success': true, "message": `Updated settings, now: ${settings}` });
+                    }
+                    else {
+                        res.json({ 'success': false, 'message': 'Couldnt update settings' });
+                    }
+                    break;
 
-            default:
-                if (!res.headersSent) {
-                    res.json({ 'success': false, 'message': 'no known command' });
-                }
-                else {
+                default:
+                    if (!res.headersSent) {
+                        res.json({ 'success': false, 'message': 'no known command' });
+                    }
+                    else {
 
-                }
+                    }
+            }
+        }
+        else {
+            res.json({'success': false, 'message': 'failed to verify admin stat.'})
+            console.log('failed');
         }
     }
     else {
-        console.log('failed');
+        res.json({'success': false, 'message':'Settings do not allow for funcPage usage.'})
     }
 });
 
@@ -713,7 +724,7 @@ function getSettings(callReason) {
                     const split_values = data.replace('\r', '').split('\n');
                     split_values.forEach((column) => {
                         split_internal = column.split(':');
-                        jsonData[split_internal[0]] = split_internal[1];
+                        jsonData[split_internal[0]] = split_internal[1].toLowerCase() === 'true' ? true : split_internal[1].toLowerCase() === 'false' ? false : split_internal[1];
                     });
                     settings = jsonData;
                     resolve();
