@@ -393,21 +393,21 @@ app.post('/tasks/api/addOne', (req, res) => {
 
 // ETC
 
-app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a RustLang binary TCP websocket
-    let tcpClient = new net.Socket();
-    const startTime = performance.now();
+//app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a RustLang binary TCP websocket
+//    let tcpClient = new net.Socket();
+//    const startTime = performance.now();
 
-    tcpClient.connect(12500, '127.0.0.1', () => {
-        console.log('made a link to rustApp');
-    });
-    tcpClient.on('data', (data) => {
-        res.send(data.toString());
-    });
-    tcpClient.on('close', () => {
-        const endTime = performance.now();
-        console.log(`rustapp perf time: ${endTime - startTime}`);
-    });
-});
+//    tcpClient.connect(12500, '127.0.0.1', () => {
+//        console.log('made a link to rustApp');
+//    });
+//    tcpClient.on('data', (data) => {
+//        res.send(data.toString());
+//    });
+//    tcpClient.on('close', () => {
+//        const endTime = performance.now();
+//        console.log(`rustapp perf time: ${endTime - startTime}`);
+//    });
+//});
 
 const isAdmin = async (request) => {
     isLocalHost = request.socket.remoteAddress === process.env.SERVERIPADDR;
@@ -739,3 +739,67 @@ async function dynamicSettings() {
     const recentTimerID = await setTimeout(dynamicSettings, 'cycleTime' in settings ? settings.cycleTime * 1000 : 60 * 60 * 60 * 1000);
     return recentTimerID;
     };
+
+// Test cases =======================================================================================================================================
+
+testing_cases = false;
+
+if (testing_cases) {
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; // for simple internal https testing
+
+    total_paths = []
+    app._router.stack.forEach((r) => {
+        if (r.route && r.route.path) {
+            total_paths.push(r.route.path)
+        }
+    });
+
+    if (total_paths.length > 0) { // testing generic get for every available path
+        total_paths.forEach((path) => {
+            try {
+                https.get(`https://${serverip}:${serverport}${path}`, (response) => {
+                    console.log('Running get for ', `${serverip}:${serverport}${path}`)
+                    response.on('end', () => {
+                        console.log('Finished on ', path, response.statusCode);
+                    });
+                }).on('error', (err) => {
+                    console.log('error on path ', path, err.message);
+                });
+            }
+            catch (err) {
+                console.log('get error on ', path, err);
+            }
+        });
+
+        total_paths.forEach((path) => { // empty post for every path
+            options = {
+                hostname: serverip,
+                port: 443,
+                'path': path,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': 0
+                }
+            }
+            
+            try {
+                console.log('Running post for ', `${serverip}:${serverport}${path}`)
+                https.request(options, (response) => {
+                    response.on('end', () => {
+                        console.log('Finished on ', path, response.statusCode);
+                    });
+                }).on('error', (err) => {
+                    console.log('error on path ', path, err.message);
+                });
+            }
+            catch (err) {
+                console.log('get error on ', path, err);
+            }
+        });
+    }
+    else {
+        console.log('issue pulling paths from list, may have ran into issue initializing available paths');
+    }
+
+}
