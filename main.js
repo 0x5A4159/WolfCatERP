@@ -20,6 +20,8 @@ const cert = fs.readFileSync('./rsa/localhost.crt');
 const default_avatar = fs.readFileSync('./useraviencode.txt');
 const ONE_MONTH = 1000 * 60 * 60 * 24 * 30;
 
+const testing_cases = false;
+
 const USER_ROLES = new Map([ // mapping numeric roles to role-names
     [0, 'Admin'],
     [1, 'Moderator'],
@@ -85,6 +87,14 @@ const isAuth = async (req, res, next) => {
         res.redirect('/signup');
     }
 };
+
+if (testing_cases) {
+    app.use((req, _, next) => {
+        console.log("Body: ", req.body);
+        console.log("Headers: ", req.headers);
+        next();
+    });
+}
 
 app.use((req, _, next) => {
     userRequest = req.protocol + '://' + req.get('host') + req.originalUrl;
@@ -742,8 +752,6 @@ async function dynamicSettings() {
 
 // Test cases =======================================================================================================================================
 
-testing_cases = false;
-
 if (testing_cases) {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; // for simple internal https testing
 
@@ -782,7 +790,7 @@ if (testing_cases) {
                     'Content-Length': 0
                 }
             }
-            
+
             try {
                 console.log('Running post for ', `${serverip}:${serverport}${path}`)
                 https.request(options, (response) => {
@@ -796,6 +804,42 @@ if (testing_cases) {
             catch (err) {
                 console.log('get error on ', path, err);
             }
+
+            user.find({})
+                .then((result) => {
+                    console.log('Starting POSTS for ', path)
+                    result.forEach((u) => {
+                        user_options = { ...options }
+                        user_options.path = path;
+                        user_options.headers.cookie = `SID=${u.userSession.sessionID}; USER=test`;
+                        user_options.body = {onlyCreator: true, title: 'Test title', description: 'Test description'}
+                        user_options.headers['Content-Length'] = user_options.body.toString().length;
+                        user_options.headers.connection = {
+                            'content-length': user_options.body.toString().length
+                        }
+
+                        console.log("SENDING:", user_options);
+
+                        try {
+                            https.request(user_options, (response) => {
+                                total_data = ""
+                                response.on('data', (data) => {
+                                    total_data += data;
+                                    response.end();
+
+                                });
+                                response.on('end', () => {
+                                    console.log('end reached on post')
+                                    console.log(total_data);
+                                })
+                            })
+                        }
+                        catch (err) {
+                            console.log(err);
+                        }
+                    });
+                });
+        
         });
     }
     else {
