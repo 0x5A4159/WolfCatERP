@@ -38,7 +38,7 @@ const server = https.createServer({
 mongoose.connect('mongodb://127.0.0.1:27017/appdb')
     .then((result) => {
         console.log("DB connect on localhost:27017");
-        server.listen(serverport, serverip);    
+        server.listen(serverport, serverip);
     })
     .catch((err) => console.log("Failed connect"));
 
@@ -96,21 +96,35 @@ if (testing_cases) {
     });
 }
 
-app.use((req, _, next) => {
-    userRequest = req.protocol + '://' + req.get('host') + req.originalUrl;
-    if (typeof userStat[req.socket.remoteAddress] !== "undefined") {
-        if (typeof userStat[req.socket.remoteAddress][userRequest] !== "undefined") {
-            userStat[req.socket.remoteAddress][userRequest] += 1;
+
+app.use((req, res, next) => {
+    if (settings.apiLimit) {
+        if (req.method === 'POST') {
+            userRequest = req.protocol + '://' + req.get('host') + req.originalUrl;
+            if (typeof userStat[req.socket.remoteAddress] !== "undefined") {
+                if (typeof userStat[req.socket.remoteAddress][userRequest] !== "undefined") {
+                    userStat[req.socket.remoteAddress][userRequest] += 1;
+                }
+                else {
+                    userStat[req.socket.remoteAddress][userRequest] = 1;
+                };
+            }
+            else {
+                userStat[req.socket.remoteAddress] = { [userRequest]: 0 }
+            }
+            if (userStat[req.socket.remoteAddress][userRequest] < settings.apiMax) {
+                next();
+            }
+            else {
+                res.json({ 'success': false, 'message': "API max reached, try again later." });
+            }
         }
         else {
-            userStat[req.socket.remoteAddress][userRequest] = 1;
-        };
+            next();
+        }
     }
-    else {
-        userStat[req.socket.remoteAddress] = {};
-    }
-    next();
 });
+
 
 // Basic website pages, login and home =======================================================================================================
 app.get("/", (req, res) => {
@@ -322,82 +336,72 @@ app.post('/tasks/api/editTask', async (req, res) => {
 });
 
 app.post('/tasks/api/delOne', (req, res) => {
-    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
-        res.status(400).json({ success: false, message: "Removing too fast" });
-    }
-    else {
-        try {
-            task.findById(req.body.popid).then(async (result) => {
-                if (result) {
-                    if (result.onlyCreator) {
-                        user.findOne({ userName: result.createdby.toLowerCase() }).then(async (userResult) => {
-                            if (userResult.userSession.sessionID === req.cookies.SID) {
-                                result.complete = true
-                                await result.save();
-                                res.status(200).json({ success: true });
-                            }
-                            else {
-                                res.status(403).json({ success: false, message: "Not the creator of this task" });
-                            }
-                        }).catch((err) => { res.status(500).json({ success: false }) });
-                    }
-                    else {
-                        result.complete = true
-                        await result.save()
-                        res.status(200).json({ success: true });
-                    }
+    try {
+        task.findById(req.body.popid).then(async (result) => {
+            if (result) {
+                if (result.onlyCreator) {
+                    user.findOne({ userName: result.createdby.toLowerCase() }).then(async (userResult) => {
+                        if (userResult.userSession.sessionID === req.cookies.SID) {
+                            result.complete = true
+                            await result.save();
+                            res.status(200).json({ success: true });
+                        }
+                        else {
+                            res.status(403).json({ success: false, message: "Not the creator of this task" });
+                        }
+                    }).catch((err) => { res.status(500).json({ success: false }) });
                 }
                 else {
-                    res.status(403).json({ success: false });
+                    result.complete = true
+                    await result.save()
+                    res.status(200).json({ success: true });
                 }
+            }
+            else {
+                res.status(403).json({ success: false });
+            }
+        })
+            .catch((error) => {
+                console.log(error);
             })
-                .catch((error) => {
-                    console.log(error);
-                })
-        }
-        catch {
-            res.status(500).json({ success: false });
-        }
+    }
+    catch {
+        res.status(500).json({ success: false });
     }
 });
 
 app.post('/tasks/api/addOne', (req, res) => {
-    if (userStat[req.socket.remoteAddress][userRequest] > 5) {
-        res.status(400).json({ success: false });
-    }
-    else {
-        const userTitle = req.body.title;
-        let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
+    const userTitle = req.body.title;
+    let userDesc = req.body.description.length === 0 ? "No description" : req.body.description;
 
-        try {
-            successcreatedate = Date.now()
-            createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then((sessionUserVal) => {
-                task.create({ // create the task under the name of whoever matches the session id in their cookies
-                    title: userTitle,
-                    description: userDesc.length === 0 ? "No description" : userDesc,
-                    complete: false,
-                    createdate: successcreatedate,
-                    createdby: capitalizeWord(sessionUserVal.userName),
-                    onlyCreator: req.body.onlyCreator,
-                    lastEdited: "None"
-                }).then((result) => {
-                    res.status(200).send({
-                        "success": true,
-                        "id": result._id,
-                        "createdate": successcreatedate,
-                        "createdby": capitalizeWord(sessionUserVal.userName)
-                    });
+    try {
+        successcreatedate = Date.now()
+        createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then((sessionUserVal) => {
+            task.create({ // create the task under the name of whoever matches the session id in their cookies
+                title: userTitle,
+                description: userDesc.length === 0 ? "No description" : userDesc,
+                complete: false,
+                createdate: successcreatedate,
+                createdby: capitalizeWord(sessionUserVal.userName),
+                onlyCreator: req.body.onlyCreator,
+                lastEdited: "None"
+            }).then((result) => {
+                res.status(200).send({
+                    "success": true,
+                    "id": result._id,
+                    "createdate": successcreatedate,
+                    "createdby": capitalizeWord(sessionUserVal.userName)
                 });
-            }).catch((err) => {
-                console.log(err);
-                res.status(500).send({ "success": false, "message": "Couldn't create task." });
             });
-
-        }
-        catch (err) {
+        }).catch((err) => {
             console.log(err);
-            res.status(500).send({ "success": false, "id": "0" });
-        }
+            res.status(500).send({ "success": false, "message": "Couldn't create task." });
+        });
+
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).send({ "success": false, "id": "0" });
     }
 });
 
