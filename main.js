@@ -656,9 +656,16 @@ function capitalizeWord(string) {
 
 // reset userstat every X seconds to help with limiting API usage and keeping track of user requests
 
-setInterval(() => {
+const userStatInterval = setInterval(() => {
     userStat = {};
-}, 30_000);
+}, 5_000);
+
+const checkStat = setInterval(() => { // does a slight delay and checks if settings match, if it does it drops the interval for settings
+    if (!(settings.apiLimit) && typeof settings.apiLimit !== 'undefined') {
+        clearInterval(checkStat);
+        clearInterval(userStatInterval);
+    }
+},5_000);
 
 // Image processing
 
