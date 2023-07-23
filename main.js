@@ -407,29 +407,29 @@ app.post('/tasks/api/addOne', (req, res) => {
 
 // RUSTAPP LOCAL REVERSE PROXY SERVER
 
-app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a RustLang binary TCP websocket
-    let tcpClient = new net.Socket();
-    const startTime = performance.now();
+//app.get("/rustapp", (req, res) => { // this reaches out to an API hosted on a RustLang binary TCP websocket
+//    let tcpClient = new net.Socket();
+//    const startTime = performance.now();
 
-    try {
-        tcpClient.connect(12500, '127.0.0.1', () => {
-            console.log('made a link to rustApp');
-        });
-        tcpClient.on('data', (data) => {
-            res.send(data.toString());
-        });
-        tcpClient.on('close', () => {
-            const endTime = performance.now();
-            console.log(`rustapp perf time: ${endTime - startTime}`);
-        });
-        tcpClient.on('error', (err) => {
-            console.log("tcpClient failed: ", err);
-        })
-    }
-    catch (error) {
-        console.log("Couldn't read for /rustapp, ", error);
-    }
-});
+//    try {
+//        tcpClient.connect(12500, '127.0.0.1', () => {
+//            console.log('made a link to rustApp');
+//        });
+//        tcpClient.on('data', (data) => {
+//            res.send(data.toString());
+//        });
+//        tcpClient.on('close', () => {
+//            const endTime = performance.now();
+//            console.log(`rustapp perf time: ${endTime - startTime}`);
+//        });
+//        tcpClient.on('error', (err) => {
+//            console.log("tcpClient failed: ", err);
+//        })
+//    }
+//    catch (error) {
+//        console.log("Couldn't read for /rustapp, ", error);
+//    }
+//});
 
 const isAdmin = async (request) => {
     isLocalHost = request.socket.remoteAddress === process.env.SERVERIPADDR;
