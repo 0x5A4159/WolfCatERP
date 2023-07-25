@@ -284,16 +284,21 @@ app.get("/tasks/id/:urlid/edit", (req, res) => {
 });
 
 app.get("/tasks/history", (req, res) => {
-    task.find({ complete: true }).then((result) => {
-        res.render('task_history', {
-            tasks: result,
-            user: capitalizeWord(req.cookies.USER)
-        });
-    })
-        .catch((error) => {
-            console.log(error);
-            res.redirect('404')
+    if (!isNaN(req.query.pagenum) && req.query.pagenum >= 0) {
+        task.find({ complete: true }).sort('createdate').limit(5).skip(req.query.pagenum * 5).then((result) => {
+            res.render('task_history', {
+                tasks: result,
+                user: capitalizeWord(req.cookies.USER)
+            });
         })
+            .catch((error) => {
+                console.log(error);
+                res.redirect('/404')
+            })
+    }
+    else {
+        res.redirect('/tasks/history?pagenum=0');
+    }
 });
 
 app.get("/tasks/api/fetchAll", (_, res) => {

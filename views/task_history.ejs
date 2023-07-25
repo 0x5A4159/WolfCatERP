@@ -3,6 +3,18 @@
     <link rel="stylesheet" href="/tasks.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
+
+<style>
+    #navigation {
+        margin-top: 1em;
+    }
+    #navigation button {
+        width: 3em;
+        height:2em;
+        font-size: 25px;
+    }
+</style>
+
 <body>
     <div id="mainBody">
         <%- include('./partials/sidebar.ejs') %>
@@ -25,10 +37,16 @@
             </div>
         </div>
         <% } %>
+        <div id="navigation">
+            <button onclick="backOne()">&larr;</button>
+            <button onclick="nextOne()">&rarr;</button>
+        </div>
     </div>
+
 </body>
 
 <script>
+
     addEventListener("resize", (event) => {
         let mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
         const descriptors = document.querySelectorAll(".taskIndividual p");
@@ -43,5 +61,21 @@
             });
         }
     });
+
+    const newPageNum = parseInt(window.location.search.substring(window.location.search.indexOf('=')+1, window.location.search.length));
+    function backOne() {
+        if (newPageNum <= 0) {
+            alert("Can't go any further back");
+        }
+        else {
+            const newPath = `${window.location.pathname}?pagenum=${newPageNum - 1}`;
+            window.location.replace(newPath);
+        }
+    }
+
+    function nextOne() {
+        const newPath = `${window.location.pathname}?pagenum=${newPageNum + 1}`;
+        window.location.replace(newPath);
+    }
 
 </script>
