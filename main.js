@@ -312,17 +312,18 @@ app.get("/tasks/api/fetchAll", (_, res) => {
 });
 
 app.post('/tasks/api/editTask', async (req, res) => {
-    // add user authentication
     createdByUser = user.findOne({ 'userSession.sessionID': req.cookies.SID }).then(async (sessionUserVal) => {
         if (req.body.title !== "") {
             await task.updateOne({ _id: req.body.taskid }
-                , {
+                ,
+                {
                     '$set': {
                         'title': req.body.title,
                         'description': req.body.description === "" ? "None" : req.body.description,
                         'lastEdited': capitalizeWord(sessionUserVal.userName)
                     }
-                });
+                }
+            );
 
             addLog(`User ${capitalizeWord(sessionUserVal.userName)} edited task.`);
 
@@ -468,6 +469,8 @@ app.get("/admin/funcs", async (req, res) => {
     }
 })
 
+
+
 app.post("/admin/funcs", async (req, res) => {
     if (settings.funcPage) {
         if (await isAdmin(req)) {
@@ -478,7 +481,12 @@ app.post("/admin/funcs", async (req, res) => {
                         try {
                             jsonVal = JSON.parse(funcParam);
                             await task.deleteMany(jsonVal);
-                            res.json({ "success": true, "message": "called func successfully" })
+
+                            user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                                addLog(`Tasks with values ${JSON.stringify(jsonVal)} were deleted by ${e.userName}`);
+                            }).catch((err) => { console.log (err)})
+
+                            res.json({ "success": true, "message": "called func successfully" });
                         }
                         catch {
                             res.json({ "success": false, "message": "Bad formatting on parameters" })
@@ -492,6 +500,28 @@ app.post("/admin/funcs", async (req, res) => {
 
                 case 'completeAll':
                     await task.updateMany({}, { '$set': { 'complete': true } });
+
+                    user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                        addLog(`All open tasks completed by ${e.userName}`);
+                    }).catch((err) => { console.log(err) })
+
+                    res.json({ "success": true, "message": "Completed all tasks" });
+                    break;
+
+                case 'updateUser':
+                    try {
+                        let userChange = JSON.parse(funcParam);
+                        await user.updateMany({ userName: userChange.user }, { '$set': userChange.updates });
+
+                        user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                            addLog(`${e.userName} updated user ${userChange.user} with new values ${JSON.stringify(userChange.updates)}`);
+                        }).catch((err) => { console.log(err) });
+
+                        res.json({ "success": true, "message": "user updated with new settings" });
+                    }
+                    catch (err) {
+                        res.json({ "success": false, "message": `user wasn't able to be updated for reason: ${err}` });
+                    }
                     break;
 
                 case 'logoutUser':
@@ -499,6 +529,11 @@ app.post("/admin/funcs", async (req, res) => {
                         user.findOne({ userName: funcParam.toLowerCase() }).then((result) => {
                             result.userSession = {};
                             result.save();
+
+                            user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                                addLog(`${result.userName} was forcefully signed out by ${e.userName}`);
+                            }).catch((err) => { console.log(err) });
+
                             res.json({ "success": true, "message": "logged out user successfully" });
                         }).catch((err) => {
                             res.json({ "success": false, "message": "couldn't find user" });
@@ -510,13 +545,18 @@ app.post("/admin/funcs", async (req, res) => {
                     break;
 
                 case 'cycleLog':
-                    retvalue = await cycleLog();
-                    if (typeof retvalue !== 'undefined') {
-                        res.json({ "success": true, "message": `${retvalue}` });
-                    }
-                    else {
-                        res.json({ "success": false, "message": `Issue cycling log, value for return is ${retvalue}` })
-                    }
+                    user.findOne({ "userSession.sessionID": req.cookies.SID }).then(async (e) => {
+                        await addLog(`${e.userName} initiated cycling logs`);
+                        retvalue = await cycleLog();
+                        if (typeof retvalue !== 'undefined') {
+                            addLog(`${e.userName} cycled logs, ${retvalue}`);
+                            res.json({ "success": true, "message": `${retvalue}` });
+                        }
+                        else {
+                            res.json({ "success": false, "message": `Issue cycling log, value for return is ${retvalue}` })
+                        }
+                        
+                    }).catch((err) => { console.log(err) });
                     break;
 
                 case 'AutoCycle':
@@ -532,7 +572,12 @@ app.post("/admin/funcs", async (req, res) => {
                     clearTimeout(recentTimer);
                     recentTimer = await dynamicSettings();
                     if (typeof recentTimer !== 'undefined') {
-                        res.json({ 'success': true, "message": `Updated settings, now: ${settings}` });
+
+                        user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                            addLog(`${e.userName} updated server settings`);
+                        }).catch((err) => { console.log(err) });
+
+                        res.json({ 'success': true, "message": `Updated settings, now: ${JSON.stringify(settings)}` });
                     }
                     else {
                         res.json({ 'success': false, 'message': 'Couldnt update settings' });
