@@ -286,9 +286,13 @@ app.get("/tasks/id/:urlid/edit", (req, res) => {
 app.get("/tasks/history", (req, res) => {
     if (!isNaN(req.query.pagenum) && req.query.pagenum >= 0) {
         task.find({ complete: true }).sort('createdate').limit(5).skip(req.query.pagenum * 5).then((result) => {
-            res.render('task_history', {
-                tasks: result,
-                user: capitalizeWord(req.cookies.USER)
+            task.countDocuments({ complete: true }).then((documentCount) => {
+                res.render('task_history', {
+                    tasks: result,
+                    user: capitalizeWord(req.cookies.USER),
+                    total: documentCount,
+                    curPage: parseInt(req.query.pagenum)
+                });
             });
         })
             .catch((error) => {
@@ -468,7 +472,6 @@ app.get("/admin/funcs", async (req, res) => {
         res.json({"success": false, "message": "FuncPage disabled in settings."})
     }
 })
-
 
 
 app.post("/admin/funcs", async (req, res) => {

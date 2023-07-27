@@ -13,6 +13,13 @@
         height:2em;
         font-size: 25px;
     }
+    #page<%=curPage%> {
+        transition-duration:0.2s;
+        background-color:lightgreen;
+    }
+    #page<%=curPage%>:hover {
+        background-color:green;
+    }
 </style>
 
 <body>
@@ -39,6 +46,20 @@
         <% } %>
         <div id="navigation">
             <button onclick="backOne()">&larr;</button>
+            <%
+            let count = 0;
+            if (curPage === 0){
+                curPage += 2
+            }
+            else if (curPage === 1 ){
+                curPage += 1
+            }
+            for (let i = curPage-2; i < (total / 5); i++) {
+            if (count > 4) {break}
+            count += 1
+            %>
+            <button id="page<%=i%>" class="currentPage" onclick="jumpToPage(<%=i%>)"><%= i %></button>
+            <%}%>
             <button onclick="nextOne()">&rarr;</button>
         </div>
     </div>
@@ -46,6 +67,7 @@
 </body>
 
 <script>
+    const docTotal = <%= total %>
 
     addEventListener("resize", (event) => {
         let mobile = (window.innerWidth / window.innerHeight < 1) ? true : false;
@@ -61,6 +83,11 @@
             });
         }
     });
+
+    function jumpToPage(pageNum) {
+        const newPath = `${window.location.pathname}?pagenum=${pageNum}`
+        window.location.replace(newPath);
+    }
 
     const newPageNum = parseInt(window.location.search.substring(window.location.search.indexOf('=')+1, window.location.search.length));
     function backOne() {
