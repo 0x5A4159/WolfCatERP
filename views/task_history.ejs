@@ -101,8 +101,13 @@
     }
 
     function nextOne() {
-        const newPath = `${window.location.pathname}?pagenum=${newPageNum + 1}`;
-        window.location.replace(newPath);
+        if (!(document.getElementById(`page${newPageNum + 1}`) === null)) {
+            const newPath = `${window.location.pathname}?pagenum=${newPageNum + 1}`;
+            window.location.replace(newPath);
+        }
+        else {
+            alert('No more results past this page.');
+        }
     }
 
 </script>
