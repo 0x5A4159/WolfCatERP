@@ -55,6 +55,11 @@ app.use(express.static('static'));
 
 app.use(cookieParser());
 
+app.use((req, res, next) => { // helps to handle whether or not user is signed in to avoid depicting unneccessary sign in postage.
+    res.locals.userIsSignedIn = typeof req.cookies.USER === 'undefined';
+    next();
+})
+
 const validAuthDate = async (SID) => { // checks to see if a session id is older than the expire date
     const sessionUserObj = await user.findOne({ "userSession.sessionID": SID });
     return sessionUserObj;
