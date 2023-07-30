@@ -57,6 +57,7 @@ app.use(cookieParser());
 
 app.use((req, res, next) => { // helps to handle whether or not user is signed in to avoid depicting unneccessary sign in postage.
     res.locals.userIsSignedIn = typeof req.cookies.USER === 'undefined';
+    res.locals.userNameHeader = capitalizeWord(req.cookies.USER);
     next();
 })
 
@@ -133,7 +134,7 @@ app.use((req, res, next) => {
 
 // Basic website pages, login and home =======================================================================================================
 app.get("/", (req, res) => {
-    res.render('index', { user: capitalizeWord(req.cookies.USER) });
+    res.render('index');
 });
 
 app.get("/home", (_, res) => {
