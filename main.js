@@ -357,14 +357,16 @@ app.post('/tasks/api/delOne', (req, res) => {
             if (result) {
                 if (result.onlyCreator) {
                     user.findOne({ userName: result.createdby.toLowerCase() }).then(async (userResult) => {
-                        if (userResult.userSession.sessionID === req.cookies.SID) {
-                            result.complete = true
-                            await result.save();
-                            res.status(200).json({ success: true });
-                        }
-                        else {
-                            res.status(403).json({ success: false, message: "Not the creator of this task" });
-                        }
+                        user.findOne({ "userSession.sessionID": req.cookies.SID }).then(async (deleterResult) => {
+                            if (userResult.userSession.sessionID === req.cookies.SID || userResult.userRole > deleterResult.userRole) {
+                                result.complete = true
+                                await result.save();
+                                res.status(200).json({ success: true });
+                            }
+                            else {
+                                res.status(403).json({ success: false, message: "Not the creator of this task" });
+                            }
+                        }).catch((err) => { res.status(500).json({ success: false }) });
                     }).catch((err) => { res.status(500).json({ success: false }) });
                 }
                 else {
