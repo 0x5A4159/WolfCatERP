@@ -18,7 +18,7 @@
 
         div #content_body p {
             margin-right: 0;
-            margin-left:auto;
+            margin-left: auto;
         }
 
         #userAvi {
@@ -29,24 +29,92 @@
             border-radius: 10px;
         }
 
+        #navigation {
+            margin-top: 1em;
+        }
+
+        #navigation button {
+            width: 3em;
+            height: 2em;
+            font-size: 25px;
+        }
+
+        #page<%=curPage %> {
+            transition-duration: 0.2s;
+            background-color: lightgreen;
+        }
+
+        #page<%=curPage %> :hover {
+            background-color: green;
+        }
     </style>
 </head>
 <body>
     <div id="mainBody">
         <%- include('./partials/sidebar.ejs') %>
         <%- include('./partials/header.ejs') %>
-
-        <% result.forEach((e) => { %>
+        <% users.result.forEach((e) => { %>
         <div id="content_body">
             <% if (e.userAvatar !== "") { %>
-                <img id="userAvi" src="data:image/png;base64, <%= e.userAvatar %>" />
+            <img id="userAvi" src="data:image/png;base64, <%= e.userAvatar %>" />
             <% } else { %>
-                <img id="userAvi" src="default.png" />
+            <img id="userAvi" src="default.png" />
             <%}%>
             <a href="/users/<%=e.userName%>"><h2><%= e.userName[0].toUpperCase() + e.userName.slice(1) %></h2></a>
             <p>Member since: <%= e.userCreated %></p>
         </div>
         <%})%>
+
+        <div id="navigation">
+            <button onclick="backOne()">&larr;</button>
+            <%
+            let count = 0;
+            if (curPage === 0){
+            curPage += 2
+            }
+            else if (curPage === 1 ){
+            curPage += 1
+            }
+            for (let i = curPage-2; i < (total / 5); i++) {
+            if (count > 4) {break}
+            count += 1
+            %>
+            <button id="page<%=i%>" class="currentPage" onclick="jumpToPage(<%=i%>)"><%= i %></button>
+            <%}%>
+            <button onclick="nextOne()">&rarr;</button>
+        </div>
+
+
+
     </div>
+
 </body>
 </html>
+
+<script>
+    function jumpToPage(pageNum) {
+        const newPath = `${window.location.pathname}?pagenum=${pageNum}`
+        window.location.replace(newPath);
+    }
+
+    const newPageNum = parseInt(window.location.search.substring(window.location.search.indexOf('=') + 1, window.location.search.length));
+    function backOne() {
+        if (newPageNum <= 0) {
+            alert("Can't go any further back");
+        }
+        else {
+            const newPath = `${window.location.pathname}?pagenum=${newPageNum - 1}`;
+            window.location.replace(newPath);
+        }
+    }
+
+    function nextOne() {
+        if (!(document.getElementById(`page${newPageNum + 1}`) === null)) {
+            const newPath = `${window.location.pathname}?pagenum=${newPageNum + 1}`;
+            window.location.replace(newPath);
+        }
+        else {
+            alert('No more results past this page.');
+        }
+    }
+</script>
