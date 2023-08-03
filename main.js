@@ -591,12 +591,23 @@ app.post("/admin/funcs", async (req, res) => {
                     }).catch((err) => { console.log(err) });
                     break;
 
-                case 'AutoCycle':
+                case 'autoCycle':
                     if (funcParam.toLowerCase() === 'on') {
-
+                        await changeSetting('autoCycle', 'true');
+                        user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                            addLog(`${e.userName} enabled autoCycle.`);
+                        }).catch((err) => { console.log(err) });
+                        res.json({ 'success': true, 'message': 'wrote new definition for value' });
                     }
                     else if (funcParam.toLowerCase() === 'off') {
-
+                        await changeSetting('autoCycle', 'false');
+                        user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                            addLog(`${e.userName} disabled autoCycle.`);
+                        }).catch((err) => { console.log(err) });
+                        res.json({ 'success': true, 'message': 'wrote new definition for value' });
+                    }
+                    else {
+                        res.json({ 'succeess': false, 'message': 'couldnt interpret provided variable' });
                     }
                     break;
 
@@ -846,7 +857,28 @@ async function dynamicSettings() {
     await getSettings('Called by dynamicSetting auto-updater')
     const recentTimerID = await setTimeout(dynamicSettings, 'cycleTime' in settings ? settings.cycleTime * 1000 : 60 * 60 * 60 * 1000);
     return recentTimerID;
-    };
+};
+
+function changeSetting(setting_name, forced_value) {
+    const streamRead = fs.createReadStream('settings.cfg', 'utf-8');
+    streamRead.on('data', (chunk) => {
+        const start_index = chunk.indexOf(`${setting_name}:`);
+
+        let readChunk = chunk.slice(
+            start_index,
+            chunk.indexOf('\n', start_index) + 1
+        );
+
+        original_length = readChunk.length;
+
+        readChunk = `${setting_name}:${forced_value}\n`
+
+        const returnable_chunk = chunk.slice(0, start_index) + readChunk + chunk.slice(start_index + original_length);
+
+        fs.writeFile('settings.cfg', returnable_chunk, { encoding: 'utf-8' }, (err) => { if (err) { console.log(err) } })
+    });
+}
+
 
 // Test cases =======================================================================================================================================
 
