@@ -744,18 +744,7 @@ function capitalizeWord(string) {
     return string[0].toUpperCase() + string.slice(1);
 };
 
-// reset userstat every X seconds to help with limiting API usage and keeping track of user requests
 
-const userStatInterval = setInterval(() => {
-    userStat = {};
-}, 5_000);
-
-const checkStat = setInterval(() => { // does a slight delay and checks if settings match, if it does it drops the interval for settings
-    if (!(settings.apiLimit) && typeof settings.apiLimit !== 'undefined') {
-        clearInterval(checkStat);
-        clearInterval(userStatInterval);
-    }
-},5_000);
 
 // Image processing
 
@@ -846,6 +835,17 @@ function getSettings(callReason) {
                         jsonData[split_internal[0]] = split_internal[1].toLowerCase() === 'true' ? true : split_internal[1].toLowerCase() === 'false' ? false : split_internal[1];
                     });
                     settings = jsonData;
+
+                    // embedding user stat into the getsettings so it will get the setting time
+                    const userStatInterval = setInterval(() => {
+                        userStat = {};
+                    }, settings.statTimer);
+                    const checkStat = setInterval(() => { // does a slight delay and checks if settings match, if it does it drops the interval for settings
+                        if (!(settings.apiLimit) && typeof settings.apiLimit !== 'undefined') {
+                            clearInterval(checkStat);
+                            clearInterval(userStatInterval);
+                        }
+                    }, settings.startTime);
                     resolve();
                 }
             });
