@@ -611,6 +611,25 @@ app.post("/admin/funcs", async (req, res) => {
                     }
                     break;
 
+                case 'setSetting':
+                    if (funcParam === '') {
+                        res.json({ 'success': false, 'message': 'No function parameters passed, cant assign no value to settings.' });
+                    }
+                    else {
+                        const colon_location = funcParam.indexOf(':')
+                        const setting_to_change = funcParam.slice(0,colon_location)
+                        const value_to_assign = funcParam.slice(colon_location+1)
+                        changeSetting(setting_to_change, value_to_assign).then((success_value) => {
+                            user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
+                                addLog(`${e.userName} adjusted setting ${setting_to_change} with new value ${value_to_assign}. Success: ${success_value}`);
+                            }).catch((err) => { console.log(err) });
+                        })
+                        res.json({ 'success': true, 'message': 'Successfully adjusted setting.' });
+                    }
+
+                    break;
+
+
                 case 'updateSettings':
                     clearTimeout(recentTimer);
                     recentTimer = await dynamicSettings();
@@ -860,22 +879,29 @@ async function dynamicSettings() {
 };
 
 function changeSetting(setting_name, forced_value) {
-    const streamRead = fs.createReadStream('settings.cfg', 'utf-8');
-    streamRead.on('data', (chunk) => {
-        const start_index = chunk.indexOf(`${setting_name}:`);
+    return new Promise((resolve) => {
+        const streamRead = fs.createReadStream('settings.cfg', 'utf-8');
+        streamRead.on('data', (chunk) => {
+            try {
+                const start_index = chunk.indexOf(`${setting_name}:`);
+                let readChunk = chunk.slice(
+                    start_index,
+                    chunk.indexOf('\n', start_index) + 1
+                );
 
-        let readChunk = chunk.slice(
-            start_index,
-            chunk.indexOf('\n', start_index) + 1
-        );
+                original_length = readChunk.length;
 
-        original_length = readChunk.length;
+                readChunk = `${setting_name}:${forced_value}\n`
 
-        readChunk = `${setting_name}:${forced_value}\n`
+                const returnable_chunk = chunk.slice(0, start_index) + readChunk + chunk.slice(start_index + original_length);
 
-        const returnable_chunk = chunk.slice(0, start_index) + readChunk + chunk.slice(start_index + original_length);
-
-        fs.writeFile('settings.cfg', returnable_chunk, { encoding: 'utf-8' }, (err) => { if (err) { console.log(err) } })
+                fs.writeFile('settings.cfg', returnable_chunk, { encoding: 'utf-8' }, (err) => { if (err) { console.log(err) } })
+            }
+            catch (error) {
+                resolve(false, error);
+            }
+            resolve(true);
+        });
     });
 }
 
