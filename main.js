@@ -623,8 +623,11 @@ app.post("/admin/funcs", async (req, res) => {
                             user.findOne({ "userSession.sessionID": req.cookies.SID }).then((e) => {
                                 addLog(`${e.userName} adjusted setting ${setting_to_change} with new value ${value_to_assign}. Success: ${success_value}`);
                             }).catch((err) => { console.log(err) });
-                        })
-                        res.json({ 'success': true, 'message': 'Successfully adjusted setting.' });
+                            res.json({ 'success': true, 'message': 'Successfully adjusted setting.' });
+                        }).catch((err) => {
+                            res.json({ 'success': false, 'message': err })
+                        });
+                        
                     }
 
                     break;
@@ -879,28 +882,33 @@ async function dynamicSettings() {
 };
 
 function changeSetting(setting_name, forced_value) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const streamRead = fs.createReadStream('settings.cfg', 'utf-8');
         streamRead.on('data', (chunk) => {
             try {
                 const start_index = chunk.indexOf(`${setting_name}:`);
-                let readChunk = chunk.slice(
-                    start_index,
-                    chunk.indexOf('\n', start_index) + 1
-                );
+                if (start_index === -1) {
+                    reject(`Couldn't find the setting ${setting_name}`);
+                }
+                else {
+                    let readChunk = chunk.slice(
+                        start_index,
+                        chunk.indexOf('\n', start_index) + 1
+                    );
 
-                original_length = readChunk.length;
+                    original_length = readChunk.length;
 
-                readChunk = `${setting_name}:${forced_value}\n`
+                    readChunk = `${setting_name}:${forced_value}\n`
 
-                const returnable_chunk = chunk.slice(0, start_index) + readChunk + chunk.slice(start_index + original_length);
+                    const returnable_chunk = chunk.slice(0, start_index) + readChunk + chunk.slice(start_index + original_length);
 
-                fs.writeFile('settings.cfg', returnable_chunk, { encoding: 'utf-8' }, (err) => { if (err) { console.log(err) } })
+                    fs.writeFile('settings.cfg', returnable_chunk, { encoding: 'utf-8' }, (err) => { if (err) { console.log(err) } })
+                    resolve(true);
+                }
             }
             catch (error) {
                 resolve(false, error);
             }
-            resolve(true);
         });
     });
 }
