@@ -185,11 +185,6 @@ app.get("/users/:userid", (req, res) => {
 });
 
 app.get('/users', (req, res) => {
-/*    user.find({})
-        .then((result) => {
-            res.render('users', {result});
-        })
-        */
     if (!isNaN(req.query.pagenum) && req.query.pagenum >= 0) {
         user.find().sort('createdate').limit(5).skip(req.query.pagenum * 5).then((result) => {
             user.countDocuments().then((documentCount) => {
