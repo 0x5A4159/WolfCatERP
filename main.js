@@ -180,6 +180,7 @@ app.get("/users/:userid", (req, res) => {
             });
         })
         .catch((error) => {
+            console.log(`Ran into error for processing page on /users/${req.params.userid}: ${error}`);
             res.redirect('/404');
         });
 });
