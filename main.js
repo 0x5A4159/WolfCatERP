@@ -278,7 +278,7 @@ app.get("/tasks", isAuth, (req, res) => {
         });
 });
 
-app.get("/tasks/id/:urlid", (req, res) => {
+app.get("/tasks/id/:urlid", isAuth, (req, res) => {
     const id_to_find = req.params.urlid;
     task.findById(id_to_find).then((result) => {
         res.render('individual_task', {
@@ -292,7 +292,7 @@ app.get("/tasks/id/:urlid", (req, res) => {
     });
 });
 
-app.get("/tasks/id/:urlid/edit", (req, res) => {
+app.get("/tasks/id/:urlid/edit", isAuth, (req, res) => {
     const id_to_find = req.params.urlid;
     task.findById(id_to_find).then((result) => {
         res.render('individual_task_edit', {
@@ -306,7 +306,7 @@ app.get("/tasks/id/:urlid/edit", (req, res) => {
         });
 });
 
-app.get("/tasks/history", (req, res) => {
+app.get("/tasks/history", isAuth, (req, res) => {
     if (!isNaN(req.query.pagenum) && req.query.pagenum >= 0) {
         task.find({ complete: true }).sort('createdate').limit(5).skip(req.query.pagenum * 5).then((result) => {
             task.countDocuments({ complete: true }).then((documentCount) => {
@@ -328,7 +328,7 @@ app.get("/tasks/history", (req, res) => {
     }
 });
 
-app.get("/tasks/api/fetchAll", (_, res) => {
+app.get("/tasks/api/fetchAll", isAuth ,(_, res) => {
     task.find({ complete: false })
         .then((result) => {
             res.send(result);
